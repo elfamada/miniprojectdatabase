@@ -158,24 +158,28 @@ st.sidebar.title("📌 Navigasi Sistem")
 if "halaman_aktif" not in st.session_state:
     st.session_state["halaman_aktif"] = "🏠 Beranda"
 
+# Gunakan list agar penamaan selalu konsisten dan tidak salah spasi
+DAFTAR_HALAMAN = [
+    "🏠 Beranda",
+    "📝 Input Penduduk Baru",
+    "🔄 Update & Simulasi Pindah",
+    "📋 Kelayakan Penduduk",
+    "📊 Report & Analisis Daerah",
+]
+
 menu = st.sidebar.radio(
     "Pilih Halaman:",
-    [
-        "🏠 Beranda",
-        "📝 Input Penduduk Baru",
-        "🔄 Update & Simulasi Pindah",
-        "📋 Kelayakan Penduduk",
-        "📊 Report & Analisis Daerah",
-    ],
-    key="halaman_aktif" # Ini kuncinya agar tombol bisa mengontrol sidebar
+    DAFTAR_HALAMAN,
+    key="halaman_aktif" # agar tombol di beranda bisa mengontrol sidebar
 )
+
 # Tarik data master untuk dropdown
 df_provinsi = run_query("SELECT id_provinsi, nama_provinsi, umr FROM Provinsi ORDER BY nama_provinsi;")
 df_profesi  = run_query("SELECT id_profesi, sektor_profesi, estimasi_gaji FROM Profesi ORDER BY sektor_profesi;")
 df_kategori = run_query("SELECT id_kategori, nama_kategori, deskripsi FROM Kategori_Biaya ORDER BY id_kategori;")
 
 # Reset data sesi update jika user berpindah dari halaman Update
-if menu != "🔄 Update & Simulasi Pindah" and "upd_data" in st.session_state:
+if menu != DAFTAR_HALAMAN[2] and "upd_data" in st.session_state:
     del st.session_state["upd_data"]
 
 if df_provinsi is None or df_provinsi.empty or df_profesi is None or df_profesi.empty or df_kategori is None or df_kategori.empty:
@@ -183,32 +187,48 @@ if df_provinsi is None or df_provinsi.empty or df_profesi is None or df_profesi.
     st.info("Silakan cek kembali proses eksekusi file .sql kamu di DBeaver.")
     st.stop()
 
+# ==============================================================================
+# HALAMAN 0 — BERANDA
+# ==============================================================================
+#Pengecekan kondisi halaman beranda
+if menu == DAFTAR_HALAMAN[0]: 
+    st.title("🏠 Dashboard Ekonomi & Biaya Kelayakan Hidup")
+    st.markdown(
+        "Selamat datang di sistem analisis ekonomi dan biaya hidup berbasis data real-time. "
+        "Pilih menu di bawah untuk mulai menggunakan sistem."
+    )
+    st.markdown("---")
+
+    # Mendefinisikan kolom sebelum memanggil 'with col1'
+    col1, col2 = st.columns(2)
+    col3, col4 = st.columns(2)
+
     with col1:
         st.markdown("### 📝 Input Penduduk Baru")
         st.write("Daftarkan data penduduk baru beserta rincian pengeluaran bulanan mereka. ID penduduk digenerate otomatis dan unik.")
         if st.button("Buka Halaman Input →", use_container_width=True, key="btn_input"):
-            st.session_state["halaman_aktif"] = "📝 Input Penduduk Baru"
+            st.session_state["halaman_aktif"] = DAFTAR_HALAMAN[1]
             st.rerun()
 
     with col2:
         st.markdown("### 🔄 Update & Simulasi Pindah Provinsi")
         st.write("Perbarui data penduduk yang sudah ada. Simulasikan dampak pindah provinsi terhadap kelayakan hidup berdasarkan UMR baru dan proyeksi pengeluaran.")
         if st.button("Buka Halaman Update →", use_container_width=True, key="btn_update"):
-            st.session_state["halaman_aktif"] = "🔄 Update & Simulasi Pindah"
+            st.session_state["halaman_aktif"] = DAFTAR_HALAMAN[2]
             st.rerun()
 
     with col3:
         st.markdown("### 📋 Kelayakan Penduduk")
         st.write("Cek status kelayakan hidup seorang penduduk berdasarkan ID-nya. Data dianalisis berdasarkan gaji sektoral, UMR, pengeluaran, serta Faktor Alpha (α).")
         if st.button("Buka Halaman Kelayakan →", use_container_width=True, key="btn_layak"):
-            st.session_state["halaman_aktif"] = "📋 Kelayakan Penduduk"
+            st.session_state["halaman_aktif"] = DAFTAR_HALAMAN[3]
             st.rerun()
 
     with col4:
         st.markdown("### 📊 Report & Analisis Daerah")
         st.write("Lihat laporan makroekonomi agregat per provinsi: grafik UMR vs pengeluaran, distribusi kategori belanja, dan tren keuangan masyarakat.")
         if st.button("Buka Halaman Report →", use_container_width=True, key="btn_report"):
-            st.session_state["halaman_aktif"] = "📊 Report & Analisis Daerah"
+            st.session_state["halaman_aktif"] = DAFTAR_HALAMAN[4]
             st.rerun()
             
     st.markdown("---")
