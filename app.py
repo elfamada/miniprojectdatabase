@@ -207,28 +207,28 @@ if menu == DAFTAR_HALAMAN[0]:
         st.markdown("### 📝 Input Penduduk Baru")
         st.write("Daftarkan data penduduk baru beserta rincian pengeluaran bulanan mereka. ID penduduk digenerate otomatis dan unik.")
         if st.button("Buka Halaman Input →", use_container_width=True, key="btn_input"):
-            st.session_state["halaman_aktif"] = DAFTAR_HALAMAN[1]
+            st.session_state["halaman_aktif"] = DAFTAR_HALAMAN[0]
             st.rerun()
 
     with col2:
         st.markdown("### 🔄 Update & Simulasi Pindah Provinsi")
         st.write("Perbarui data penduduk yang sudah ada. Simulasikan dampak pindah provinsi terhadap kelayakan hidup berdasarkan UMR baru dan proyeksi pengeluaran.")
         if st.button("Buka Halaman Update →", use_container_width=True, key="btn_update"):
-            st.session_state["halaman_aktif"] = DAFTAR_HALAMAN[2]
+            st.session_state["halaman_aktif"] = DAFTAR_HALAMAN[1]
             st.rerun()
 
     with col3:
         st.markdown("### 📋 Kelayakan Penduduk")
         st.write("Cek status kelayakan hidup seorang penduduk berdasarkan ID-nya. Data dianalisis berdasarkan gaji sektoral, UMR, pengeluaran, serta Faktor Alpha (α).")
         if st.button("Buka Halaman Kelayakan →", use_container_width=True, key="btn_layak"):
-            st.session_state["halaman_aktif"] = DAFTAR_HALAMAN[3]
+            st.session_state["halaman_aktif"] = DAFTAR_HALAMAN[2]
             st.rerun()
 
     with col4:
         st.markdown("### 📊 Report & Analisis Daerah")
         st.write("Lihat laporan makroekonomi agregat per provinsi: grafik UMR vs pengeluaran, distribusi kategori belanja, dan tren keuangan masyarakat.")
         if st.button("Buka Halaman Report →", use_container_width=True, key="btn_report"):
-            st.session_state["halaman_aktif"] = DAFTAR_HALAMAN[4]
+            st.session_state["halaman_aktif"] = DAFTAR_HALAMAN[3]
             st.rerun()
             
     st.markdown("---")
