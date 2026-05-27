@@ -40,7 +40,7 @@ def run_query(query, params=None):
                 colnames = [desc[0] for desc in cur.description]
                 return pd.DataFrame(cur.fetchall(), columns=colnames)
             return None
-    except (pymysql.Error, struct.error) as e:
+    except Exception as e:
         st.cache_resource.clear()
         st.warning("⚠️ Koneksi ke server cloud sempat tertidur. Sistem sedang memulihkan koneksi...")
         st.rerun()
