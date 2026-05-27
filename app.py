@@ -574,9 +574,9 @@ elif menu == "📋 Kelayakan Penduduk":
     st.title("📋 Analisis Kelayakan Hidup Penduduk")
     st.write(
         "Masukkan ID Penduduk untuk melihat analisis kelayakan hidup berdasarkan "
-        "gaji sektoral, UMR daerah, total pengeluaran bulanan, dan **Faktor Alpha (α)**."
+        "gaji sektoral, UMR daerah, total pengeluaran bulanan, dan Faktor Alpha (α)."
     )
-    st.caption("🔒 Privasi terjaga — pencarian menggunakan ID, bukan nama.")
+    st.caption("Pencarian menggunakan ID.")
 
     id_input_kel = st.number_input(
         "🔑 Masukkan ID Penduduk",
