@@ -1,5 +1,5 @@
 import streamlit as st
-import pymysql # Diubah dari psycopg2 ke pymysql
+import pymysql 
 import pandas as pd
 import random
 from datetime import date
@@ -13,13 +13,13 @@ st.set_page_config(page_title="Dashboard Ekonomi & Biaya Hidup", layout="wide")
 def init_connection():
     # Sesuaikan Host, User, dan Password dengan detail TiDB kamu
     return pymysql.connect(
-        host="gateway01.ap-southeast-1.prod.aws.tidbcloud.com", # GANTI DENGAN HOST TiDB-MU
+        host="gateway01.ap-southeast-1.prod.alicloud.tidbcloud.com", 
         port=4000,
-        user="xxxxxx.root", # GANTI DENGAN USER TiDB-MU
-        password="PASSWORD_TIDB_KAMU", # GANTI DENGAN PASSWORD-MU
-        database="test", # Sesuaikan nama database
-        ssl_ca="isrgrootx1.pem", # Pastikan file ini ada di folder yang sama
-        autocommit=True # Penting untuk MySQL/TiDB agar transaksi langsung tersimpan
+        user="3PvGrNdx75VzPfT.root", 
+        password="n1zUMUL3OXtWwOhU", 
+        database="test", 
+        ssl_ca="isrgrootx1.pem", 
+        autocommit=True 
     )
 
 try:
