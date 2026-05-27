@@ -215,7 +215,7 @@ if menu == DAFTAR_HALAMAN[0]:
             use_container_width=True, 
             key="btn_input", 
             on_click=ganti_halaman, 
-            args=(DAFTAR_HALAMAN[1],) # Jangan lupakan tanda koma di dalam kurung!
+            args=(DAFTAR_HALAMAN[0],) 
         )
 
     with col2:
@@ -226,7 +226,7 @@ if menu == DAFTAR_HALAMAN[0]:
             use_container_width=True, 
             key="btn_update", 
             on_click=ganti_halaman, 
-            args=(DAFTAR_HALAMAN[2],)
+            args=(DAFTAR_HALAMAN[1],)
         )
 
     with col3:
@@ -237,7 +237,7 @@ if menu == DAFTAR_HALAMAN[0]:
             use_container_width=True, 
             key="btn_layak", 
             on_click=ganti_halaman, 
-            args=(DAFTAR_HALAMAN[3],)
+            args=(DAFTAR_HALAMAN[2],)
         )
 
     with col4:
@@ -248,7 +248,7 @@ if menu == DAFTAR_HALAMAN[0]:
             use_container_width=True, 
             key="btn_report", 
             on_click=ganti_halaman, 
-            args=(DAFTAR_HALAMAN[4],)
+            args=(DAFTAR_HALAMAN[3],)
         )
 
     st.markdown("---")
