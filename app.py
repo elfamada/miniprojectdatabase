@@ -40,7 +40,7 @@ def run_query(query, params=None):
                 colnames = [desc[0] for desc in cur.description]
                 return pd.DataFrame(cur.fetchall(), columns=colnames)
             return None
-    except (pymysql.OperationalError, pymysql.InterfaceError, struct.error) as e:
+    except (pymysql.Error, struct.error) as e:
         st.cache_resource.clear()
         st.warning("⚠️ Koneksi ke server cloud sempat tertidur. Sistem sedang memulihkan koneksi...")
         st.rerun()
@@ -266,6 +266,7 @@ if menu == DAFTAR_HALAMAN[0]:
 # HALAMAN 1 — INPUT PENDUDUK BARU
 # ==============================================================================
 elif menu == "📝 Input Penduduk Baru":
+    st.button("⬅️ Kembali ke Beranda", on_click=ganti_halaman, args=(DAFTAR_HALAMAN[0],), key="back_input")
     st.title("📝 Input Data Penduduk Baru")
     st.write("Formulir untuk mendaftarkan penduduk baru beserta rincian pengeluaran bulanannya.")
 
@@ -384,6 +385,7 @@ elif menu == "📝 Input Penduduk Baru":
 # HALAMAN 2 — UPDATE & SIMULASI PINDAH PROVINSI
 # ==============================================================================
 elif menu == "🔄 Update & Simulasi Pindah":
+    st.button("⬅️ Kembali ke Beranda", on_click=ganti_halaman, args=(DAFTAR_HALAMAN[0],), key="back_update")
     st.title("🔄 Update Data & Simulasi Pindah Provinsi")
     st.write(
         "Masukkan ID Penduduk untuk memperbarui data atau mensimulasikan dampak pindah provinsi "
@@ -571,6 +573,7 @@ elif menu == "🔄 Update & Simulasi Pindah":
 # HALAMAN 3 — KELAYAKAN PENDUDUK
 # ==============================================================================
 elif menu == "📋 Kelayakan Penduduk":
+    st.button("⬅️ Kembali ke Beranda", on_click=ganti_halaman, args=(DAFTAR_HALAMAN[0],), key="back_kelayakan")
     st.title("📋 Analisis Kelayakan Hidup Penduduk")
     st.write(
         "Masukkan ID Penduduk untuk melihat analisis kelayakan hidup berdasarkan "
@@ -648,6 +651,7 @@ elif menu == "📋 Kelayakan Penduduk":
 # HALAMAN 4 — REPORT & ANALISIS DAERAH
 # ==============================================================================
 elif menu == "📊 Report & Analisis Daerah":
+    st.button("⬅️ Kembali ke Beranda", on_click=ganti_halaman, args=(DAFTAR_HALAMAN[0],), key="back_report")
     st.title("📊 Dashboard Laporan Makroekonomi Daerah")
     st.write("Analisis agregasi real-time data pengeluaran masyarakat berbanding standar upah daerah.")
 
