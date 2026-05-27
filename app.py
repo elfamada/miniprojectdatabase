@@ -183,7 +183,7 @@ if df_provinsi is None or df_provinsi.empty or df_profesi is None or df_profesi.
     st.info("Silakan cek kembali proses eksekusi file .sql kamu di DBeaver.")
     st.stop()
 
-with col1:
+    with col1:
         st.markdown("### 📝 Input Penduduk Baru")
         st.write("Daftarkan data penduduk baru beserta rincian pengeluaran bulanan mereka. ID penduduk digenerate otomatis dan unik.")
         if st.button("Buka Halaman Input →", use_container_width=True, key="btn_input"):
