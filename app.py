@@ -57,9 +57,25 @@ if menu == "Formulir Simulasi Penduduk":
     col1, col2 = st.columns([1, 1])
 
     with col1:
-        st.subheader("A. Identitas Penduduk")
-        # Generator ID Penduduk Acak Unik untuk keperluan testing
-        id_penduduk_baru = st.number_input("ID Penduduk (Unik)", min_value=1, value=random.randint(100000, 999999))
+        st.subheader("A. Identitas Penduduk")        
+        # Cek ID paling besar yang saat ini ada di database
+        df_max_id = run_query("SELECT MAX(id_penduduk) as last_id FROM Penduduk;")
+        
+        # Ekstrak angkanya. Jika tabel kosong, kembalikan nilai None
+        last_id_db = df_max_id['last_id'].values[0] if not df_max_id.empty else None
+        
+        # Validasi: Jika kosong atau ID terakhir di bawah 2024050, tetapkan baseline ke 2024050
+        if pd.isna(last_id_db) or last_id_db < 2024050:
+            last_id = 2024050
+        else:
+            last_id = int(last_id_db)
+            
+        # Buat ID baru dengan menambah 1 dari ID terakhir
+        id_penduduk_baru = last_id + 1
+        
+        # Tampilkan di layar namun 'disabled' agar tidak bisa diubah manual oleh pengguna
+        st.number_input("ID Penduduk (Otomatis & Unik)", value=id_penduduk_baru, disabled=True)
+        
         nama_penduduk = st.text_input("Nama Lengkap Penduduk", placeholder="Contoh: Budi Santoso")
         usia = st.number_input("Usia (Tahun)", min_value=15, max_value=90, value=25)
         
