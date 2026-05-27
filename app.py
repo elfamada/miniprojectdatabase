@@ -190,7 +190,11 @@ if df_provinsi is None or df_provinsi.empty or df_profesi is None or df_profesi.
 # ==============================================================================
 # HALAMAN 0 — BERANDA
 # ==============================================================================
-# Pengecekan kondisi halaman beranda
+
+# 👇 1. Buat fungsi callback kecil ini di luar kolom
+def ganti_halaman(nama_halaman):
+    st.session_state["halaman_aktif"] = nama_halaman
+
 if menu == DAFTAR_HALAMAN[0]: 
     st.title("🏠 Dashboard Ekonomi & Biaya Kelayakan Hidup")
     st.markdown(
@@ -199,38 +203,54 @@ if menu == DAFTAR_HALAMAN[0]:
     )
     st.markdown("---")
 
-    # Mendefinisikan kolom sebelum memanggil 'with col1'
     col1, col2 = st.columns(2)
     col3, col4 = st.columns(2)
 
     with col1:
         st.markdown("### 📝 Input Penduduk Baru")
         st.write("Daftarkan data penduduk baru beserta rincian pengeluaran bulanan mereka. ID penduduk digenerate otomatis dan unik.")
-        if st.button("Buka Halaman Input →", use_container_width=True, key="btn_input"):
-            st.session_state["halaman_aktif"] = DAFTAR_HALAMAN[0]
-            st.rerun()
+        # 👇 2. Tombol diubah: hapus 'if', gunakan 'on_click' dan 'args'
+        st.button(
+            "Buka Halaman Input →", 
+            use_container_width=True, 
+            key="btn_input", 
+            on_click=ganti_halaman, 
+            args=(DAFTAR_HALAMAN[1],) # Jangan lupakan tanda koma di dalam kurung!
+        )
 
     with col2:
         st.markdown("### 🔄 Update & Simulasi Pindah Provinsi")
         st.write("Perbarui data penduduk yang sudah ada. Simulasikan dampak pindah provinsi terhadap kelayakan hidup berdasarkan UMR baru dan proyeksi pengeluaran.")
-        if st.button("Buka Halaman Update →", use_container_width=True, key="btn_update"):
-            st.session_state["halaman_aktif"] = DAFTAR_HALAMAN[1]
-            st.rerun()
+        st.button(
+            "Buka Halaman Update →", 
+            use_container_width=True, 
+            key="btn_update", 
+            on_click=ganti_halaman, 
+            args=(DAFTAR_HALAMAN[2],)
+        )
 
     with col3:
         st.markdown("### 📋 Kelayakan Penduduk")
         st.write("Cek status kelayakan hidup seorang penduduk berdasarkan ID-nya. Data dianalisis berdasarkan gaji sektoral, UMR, pengeluaran, serta Faktor Alpha (α).")
-        if st.button("Buka Halaman Kelayakan →", use_container_width=True, key="btn_layak"):
-            st.session_state["halaman_aktif"] = DAFTAR_HALAMAN[2]
-            st.rerun()
+        st.button(
+            "Buka Halaman Kelayakan →", 
+            use_container_width=True, 
+            key="btn_layak", 
+            on_click=ganti_halaman, 
+            args=(DAFTAR_HALAMAN[3],)
+        )
 
     with col4:
         st.markdown("### 📊 Report & Analisis Daerah")
         st.write("Lihat laporan makroekonomi agregat per provinsi: grafik UMR vs pengeluaran, distribusi kategori belanja, dan tren keuangan masyarakat.")
-        if st.button("Buka Halaman Report →", use_container_width=True, key="btn_report"):
-            st.session_state["halaman_aktif"] = DAFTAR_HALAMAN[3]
-            st.rerun()
-            
+        st.button(
+            "Buka Halaman Report →", 
+            use_container_width=True, 
+            key="btn_report", 
+            on_click=ganti_halaman, 
+            args=(DAFTAR_HALAMAN[4],)
+        )
+
     st.markdown("---")
     # Statistik ringkas di beranda
     res_total = run_query("SELECT COUNT(*) as total FROM Penduduk;")
@@ -242,7 +262,6 @@ if menu == DAFTAR_HALAMAN[0]:
     s1.metric("Total Penduduk Terdata", f"{total_penduduk:,} Orang")
     s2.metric("Provinsi Terdaftar",     f"{total_prov_db} Provinsi")
     s3.metric("Tanggal Akses",          str(date.today()))
-
 # ==============================================================================
 # HALAMAN 1 — INPUT PENDUDUK BARU
 # ==============================================================================
