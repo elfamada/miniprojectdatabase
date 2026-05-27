@@ -156,14 +156,14 @@ if menu == "Formulir Simulasi Penduduk":
                 with conn.cursor() as cur:
                     # Perintah 1: Insert ke tabel Penduduk
                     cur.execute(
-                        "INSERT INTO Penduduk (id_penduduk, nama_penduduk, usia, id_provinsi, id_profesi) VALUES (%s, %s, %s, %s, %s);",
+                        "INSERT INTO Penduduk (id_penduduk, nama_penduduk, usia, id_provinsi, id_profesi) VALUES (?, ?, ?, ?, ?);",
                         (id_penduduk_baru, nama_penduduk, usia, int(row_prov['id_provinsi']), int(row_prof['id_profesi']))
                     )
                     
                     # Perintah 2: Looping insert ke tabel Pengeluaran
                     for k_id, nom in st.session_state.temp_pengeluaran.items():
                         cur.execute(
-                            "INSERT INTO Pengeluaran (tanggal_catat, nominal, id_penduduk, id_kategori) VALUES (%s, %s, %s, %s);",
+                            "INSERT INTO Pengeluaran (tanggal_catat, nominal, id_penduduk, id_kategori) VALUES (?, ?, ?, ?);",
                             (date.today(), nom, id_penduduk_baru, k_id)
                         )
                 # Commit transaksi jika seluruh perintah berhasil tanpa kendala
@@ -233,7 +233,7 @@ elif menu == "Report & Analisis Daerah":
         JOIN Kategori_Biaya k ON p.id_kategori = k.id_kategori
         JOIN Penduduk pen ON p.id_penduduk = pen.id_penduduk
         JOIN Provinsi prov ON pen.id_provinsi = prov.id_provinsi
-        WHERE prov.nama_provinsi = %s
+        WHERE prov.nama_provinsi = ? 
         GROUP BY k.nama_kategori;
     """
     df_detail_daerah = run_query(query_detail_daerah, (pilihan_daerah_report,))
