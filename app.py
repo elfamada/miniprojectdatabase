@@ -2,6 +2,7 @@ import streamlit as st
 import pymysql 
 import pandas as pd
 import random
+import struct
 from datetime import date
 
 # ==============================================================================
@@ -18,7 +19,7 @@ def init_connection():
         user="3PvGrNdx75VzPfT.root", 
         password="n1zUMUL3OXtWwOhU", 
         database="test", 
-        ssl_ca="isrgrootx1.pem", 
+        ssl={"ca": "isrgrootx1.pem"}, 
         autocommit=True 
     )
 
@@ -39,11 +40,11 @@ def run_query(query, params=None):
                 colnames = [desc[0] for desc in cur.description]
                 return pd.DataFrame(cur.fetchall(), columns=colnames)
             return None
-    except pymysql.OperationalError: # Diubah dari psycopg2.OperationalError
+    except (pymysql.OperationalError, pymysql.InterfaceError, struct.error) as e:
         st.cache_resource.clear()
         st.warning("⚠️ Koneksi ke server cloud sempat tertidur. Sistem sedang memulihkan koneksi...")
         st.rerun()
-
+        
 # ==============================================================================
 # FUNGSI PENDUKUNG
 # ==============================================================================
@@ -152,6 +153,11 @@ def tampilkan_hasil_kelayakan(hasil):
 # NAVIGASI SIDEBAR
 # ==============================================================================
 st.sidebar.title("📌 Navigasi Sistem")
+
+# Berikan nilai default awal jika aplikasi baru pertama dibuka
+if "halaman_aktif" not in st.session_state:
+    st.session_state["halaman_aktif"] = "🏠 Beranda"
+
 menu = st.sidebar.radio(
     "Pilih Halaman:",
     [
@@ -160,9 +166,9 @@ menu = st.sidebar.radio(
         "🔄 Update & Simulasi Pindah",
         "📋 Kelayakan Penduduk",
         "📊 Report & Analisis Daerah",
-    ]
+    ],
+    key="halaman_aktif" # Ini kuncinya agar tombol bisa mengontrol sidebar
 )
-
 # Tarik data master untuk dropdown
 df_provinsi = run_query("SELECT id_provinsi, nama_provinsi, umr FROM Provinsi ORDER BY nama_provinsi;")
 df_profesi  = run_query("SELECT id_profesi, sektor_profesi, estimasi_gaji FROM Profesi ORDER BY sektor_profesi;")
@@ -177,60 +183,34 @@ if df_provinsi is None or df_provinsi.empty or df_profesi is None or df_profesi.
     st.info("Silakan cek kembali proses eksekusi file .sql kamu di DBeaver.")
     st.stop()
 
-# ==============================================================================
-# HALAMAN 0 — BERANDA
-# ==============================================================================
-if menu == "🏠 Beranda":
-    st.title("🏠 Dashboard Ekonomi & Biaya Kelayakan Hidup")
-    st.markdown(
-        "Selamat datang di sistem analisis ekonomi dan biaya hidup berbasis data real-time. "
-        "Pilih menu di bawah untuk mulai menggunakan sistem."
-    )
-    st.markdown("---")
-
-    col1, col2 = st.columns(2)
-    col3, col4 = st.columns(2)
-
-    with col1:
+with col1:
         st.markdown("### 📝 Input Penduduk Baru")
-        st.write(
-            "Daftarkan data penduduk baru beserta rincian pengeluaran bulanan mereka. "
-            "ID penduduk digenerate otomatis dan unik."
-        )
+        st.write("Daftarkan data penduduk baru beserta rincian pengeluaran bulanan mereka. ID penduduk digenerate otomatis dan unik.")
         if st.button("Buka Halaman Input →", use_container_width=True, key="btn_input"):
-            st.session_state["nav"] = "📝 Input Penduduk Baru"
+            st.session_state["halaman_aktif"] = "📝 Input Penduduk Baru"
             st.rerun()
 
     with col2:
         st.markdown("### 🔄 Update & Simulasi Pindah Provinsi")
-        st.write(
-            "Perbarui data penduduk yang sudah ada. Simulasikan dampak pindah provinsi "
-            "terhadap kelayakan hidup berdasarkan UMR baru dan proyeksi pengeluaran."
-        )
+        st.write("Perbarui data penduduk yang sudah ada. Simulasikan dampak pindah provinsi terhadap kelayakan hidup berdasarkan UMR baru dan proyeksi pengeluaran.")
         if st.button("Buka Halaman Update →", use_container_width=True, key="btn_update"):
-            st.session_state["nav"] = "🔄 Update & Simulasi Pindah"
+            st.session_state["halaman_aktif"] = "🔄 Update & Simulasi Pindah"
             st.rerun()
 
     with col3:
         st.markdown("### 📋 Kelayakan Penduduk")
-        st.write(
-            "Cek status kelayakan hidup seorang penduduk berdasarkan ID-nya. "
-            "Data dianalisis berdasarkan gaji sektoral, UMR, pengeluaran, serta **Faktor Alpha (α)**."
-        )
+        st.write("Cek status kelayakan hidup seorang penduduk berdasarkan ID-nya. Data dianalisis berdasarkan gaji sektoral, UMR, pengeluaran, serta Faktor Alpha (α).")
         if st.button("Buka Halaman Kelayakan →", use_container_width=True, key="btn_layak"):
-            st.session_state["nav"] = "📋 Kelayakan Penduduk"
+            st.session_state["halaman_aktif"] = "📋 Kelayakan Penduduk"
             st.rerun()
 
     with col4:
         st.markdown("### 📊 Report & Analisis Daerah")
-        st.write(
-            "Lihat laporan makroekonomi agregat per provinsi: grafik UMR vs pengeluaran, "
-            "distribusi kategori belanja, dan tren keuangan masyarakat."
-        )
+        st.write("Lihat laporan makroekonomi agregat per provinsi: grafik UMR vs pengeluaran, distribusi kategori belanja, dan tren keuangan masyarakat.")
         if st.button("Buka Halaman Report →", use_container_width=True, key="btn_report"):
-            st.session_state["nav"] = "📊 Report & Analisis Daerah"
+            st.session_state["halaman_aktif"] = "📊 Report & Analisis Daerah"
             st.rerun()
-
+            
     st.markdown("---")
     # Statistik ringkas di beranda
     res_total = run_query("SELECT COUNT(*) as total FROM Penduduk;")
@@ -242,11 +222,6 @@ if menu == "🏠 Beranda":
     s1.metric("Total Penduduk Terdata", f"{total_penduduk:,} Orang")
     s2.metric("Provinsi Terdaftar",     f"{total_prov_db} Provinsi")
     s3.metric("Tanggal Akses",          str(date.today()))
-
-# Redirect dari tombol beranda
-if "nav" in st.session_state:
-    target = st.session_state.pop("nav")
-    st.sidebar.info(f"Silakan pilih **{target}** di menu navigasi sidebar.")
 
 # ==============================================================================
 # HALAMAN 1 — INPUT PENDUDUK BARU
