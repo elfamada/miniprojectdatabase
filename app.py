@@ -354,31 +354,31 @@ elif menu == DAFTAR_HALAMAN[1]:
             else:
                 try:
                     id_final = get_next_id_penduduk()
-                    id_pengeluaran_baru = get_next_id_pengeluaran() # Ambil ID pengeluaran awal
+                    id_pengeluaran_baru = get_next_id_pengeluaran() # 👈 Memanggil ID pengeluaran baru
 
                     with conn.cursor() as cur:
-                        # 1. Simpan data penduduk
+                        # 1. Simpan Penduduk
                         cur.execute(
                             "INSERT INTO Penduduk (id_penduduk, nama_penduduk, usia, id_provinsi, id_profesi) "
                             "VALUES (%s, %s, %s, %s, %s);",
                             (id_final, nama_penduduk.strip(), int(usia), int(row_prov['id_provinsi']), int(row_prof['id_profesi']))
                         )
                         
-                        # 2. Simpan data pengeluaran dengan menyertakan id_pengeluaran
+                        # 2. Simpan Pengeluaran (👇 PERHATIKAN: id_pengeluaran sekarang dimasukkan ke dalam kueri)
                         for k_id, nom in st.session_state.temp_pengeluaran.items():
                             cur.execute(
                                 "INSERT INTO Pengeluaran (id_pengeluaran, tanggal_catat, nominal, id_penduduk, id_kategori) "
                                 "VALUES (%s, %s, %s, %s, %s);",
                                 (id_pengeluaran_baru, date.today(), int(nom), id_final, int(k_id))
                             )
-                            id_pengeluaran_baru += 1 # Tambah 1 untuk ID pengeluaran kategori berikutnya
+                            id_pengeluaran_baru += 1 # Tambah 1 jika ada lebih dari 1 pengeluaran
                             
                     st.success(f"✅ Data **{nama_penduduk}** berhasil disimpan dengan ID **{id_final}**.")
                     st.info("🔒 Simpan ID ini untuk keperluan pengecekan kelayakan atau update data.")
                     st.session_state.temp_pengeluaran = {}
                 except Exception as ex:
                     st.error(f"Gagal menyimpan. Transaksi dibatalkan. Error: {ex}")
-
+                    
     # ---------------- TAB 2: UPDATE ----------------
     with tab_update:
         st.write("Masukkan ID Penduduk untuk memperbarui profil domisili atau profesi.")
