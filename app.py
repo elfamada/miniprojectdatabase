@@ -55,6 +55,12 @@ def get_next_id_penduduk():
         return int(result['next_id'].values[0])
     return 100001
 
+def get_next_id_pengeluaran():
+    result = run_query("SELECT COALESCE(MAX(id_pengeluaran), 0) + 1 AS next_id FROM Pengeluaran;")
+    if result is not None and not result.empty:
+        return int(result['next_id'].values[0])
+    return 1
+    
 def hitung_skor_kelayakan(gaji_sektor, umr, total_pengeluaran):
     if gaji_sektor < umr:
         skor_umr = 1
@@ -348,18 +354,25 @@ elif menu == DAFTAR_HALAMAN[1]:
             else:
                 try:
                     id_final = get_next_id_penduduk()
+                    id_pengeluaran_baru = get_next_id_pengeluaran() # Ambil ID pengeluaran awal
+
                     with conn.cursor() as cur:
+                        # 1. Simpan data penduduk
                         cur.execute(
                             "INSERT INTO Penduduk (id_penduduk, nama_penduduk, usia, id_provinsi, id_profesi) "
                             "VALUES (%s, %s, %s, %s, %s);",
                             (id_final, nama_penduduk.strip(), int(usia), int(row_prov['id_provinsi']), int(row_prof['id_profesi']))
                         )
+                        
+                        # 2. Simpan data pengeluaran dengan menyertakan id_pengeluaran
                         for k_id, nom in st.session_state.temp_pengeluaran.items():
                             cur.execute(
-                                "INSERT INTO Pengeluaran (tanggal_catat, nominal, id_penduduk, id_kategori) "
-                                "VALUES (%s, %s, %s, %s);",
-                                (date.today(), int(nom), id_final, int(k_id))
+                                "INSERT INTO Pengeluaran (id_pengeluaran, tanggal_catat, nominal, id_penduduk, id_kategori) "
+                                "VALUES (%s, %s, %s, %s, %s);",
+                                (id_pengeluaran_baru, date.today(), int(nom), id_final, int(k_id))
                             )
+                            id_pengeluaran_baru += 1 # Tambah 1 untuk ID pengeluaran kategori berikutnya
+                            
                     st.success(f"✅ Data **{nama_penduduk}** berhasil disimpan dengan ID **{id_final}**.")
                     st.info("🔒 Simpan ID ini untuk keperluan pengecekan kelayakan atau update data.")
                     st.session_state.temp_pengeluaran = {}
