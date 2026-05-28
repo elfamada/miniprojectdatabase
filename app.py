@@ -362,7 +362,7 @@ elif menu == DAFTAR_HALAMAN[1]:
                                 "VALUES (%s, %s, %s, %s);",
                                 (date.today(), int(nom), id_final, int(k_id))
                             )
-                    st.success(f"✅ Data **{nama_penduduk}** berhasil disimpan dengan ID **{id_final}**.")
+                    st.success(f"✅ Data {nama_penduduk} berhasil disimpan dengan ID **{id_final}**.")
                     st.info("🔒 Simpan ID ini untuk keperluan pengecekan kelayakan atau update data.")
                     st.session_state.temp_pengeluaran = {}
                 except Exception as ex:
