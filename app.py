@@ -161,10 +161,9 @@ if "halaman_aktif" not in st.session_state:
 # Gunakan list agar penamaan selalu konsisten dan tidak salah spasi
 DAFTAR_HALAMAN = [
     "🏠 Beranda",
-    "📝 Input Penduduk Baru",
-    "🔄 Update & Simulasi Pindah",
-    "📋 Kelayakan Penduduk",
-    "📊 Report & Analisis Daerah",
+    "👥 Halaman 1: Input & Update Data",
+    "⚖️ Halaman 2: Kelayakan & Simulasi",
+    "📊 Halaman 3: Report Daerah",
 ]
 
 menu = st.sidebar.radio(
@@ -178,9 +177,11 @@ df_provinsi = run_query("SELECT id_provinsi, nama_provinsi, umr FROM Provinsi OR
 df_profesi  = run_query("SELECT id_profesi, sektor_profesi, estimasi_gaji FROM Profesi ORDER BY sektor_profesi;")
 df_kategori = run_query("SELECT id_kategori, nama_kategori, deskripsi FROM Kategori_Biaya ORDER BY id_kategori;")
 
-# Reset data sesi update jika user berpindah dari halaman Update
-if menu != DAFTAR_HALAMAN[2] and "upd_data" in st.session_state:
+# Reset data sesi jika user berpindah halaman agar memori bersih
+if menu != DAFTAR_HALAMAN[1] and "upd_data" in st.session_state:
     del st.session_state["upd_data"]
+if menu != DAFTAR_HALAMAN[2] and "analisis_data" in st.session_state:
+    del st.session_state["analisis_data"]
 
 if df_provinsi is None or df_provinsi.empty or df_profesi is None or df_profesi.empty or df_kategori is None or df_kategori.empty:
     st.error("🚨 PERINGATAN: Tabel master (Provinsi/Profesi/Kategori) di database TiDB masih kosong!")
@@ -188,13 +189,14 @@ if df_provinsi is None or df_provinsi.empty or df_profesi is None or df_profesi.
     st.stop()
 
 # ==============================================================================
-# HALAMAN 0 — BERANDA
+# FUNGSI CALLBACK NAVIGASI
 # ==============================================================================
-
-# 👇 1. Buat fungsi callback kecil ini di luar kolom
 def ganti_halaman(nama_halaman):
     st.session_state["halaman_aktif"] = nama_halaman
 
+# ==============================================================================
+# HALAMAN 0 — BERANDA
+# ==============================================================================
 if menu == DAFTAR_HALAMAN[0]: 
     st.title("🏠 Dashboard Ekonomi & Biaya Kelayakan Hidup")
     st.markdown(
@@ -203,52 +205,40 @@ if menu == DAFTAR_HALAMAN[0]:
     )
     st.markdown("---")
 
-    col1, col2 = st.columns(2)
-    col3, col4 = st.columns(2)
+    # Diubah menjadi 3 kolom agar sesuai dengan jumlah halaman baru
+    col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.markdown("### 📝 Input Penduduk Baru")
-        st.write("Daftarkan data penduduk baru beserta rincian pengeluaran bulanan mereka. ID penduduk digenerate otomatis dan unik.")
-        # 👇 2. Tombol diubah: hapus 'if', gunakan 'on_click' dan 'args'
+        st.markdown("### 👥 Manajemen Data")
+        st.write("Daftarkan penduduk baru atau perbarui informasi profil domisili dan profesi dari data yang sudah ada.")
         st.button(
-            "Buka Halaman Input →", 
+            "Buka Input & Update →", 
             use_container_width=True, 
-            key="btn_input", 
+            key="btn_hal1", 
             on_click=ganti_halaman, 
             args=(DAFTAR_HALAMAN[1],) 
         )
 
     with col2:
-        st.markdown("### 🔄 Update & Simulasi Pindah Provinsi")
-        st.write("Perbarui data penduduk yang sudah ada. Simulasikan dampak pindah provinsi terhadap kelayakan hidup berdasarkan UMR baru dan proyeksi pengeluaran.")
+        st.markdown("### ⚖️ Analisis & Simulasi")
+        st.write("Cek status kelayakan finansial saat ini dan proyeksikan dampaknya jika pindah provinsi atau berganti profesi.")
         st.button(
-            "Buka Halaman Update →", 
+            "Buka Halaman Analisis →", 
             use_container_width=True, 
-            key="btn_update", 
+            key="btn_hal2", 
             on_click=ganti_halaman, 
             args=(DAFTAR_HALAMAN[2],)
         )
 
     with col3:
-        st.markdown("### 📋 Kelayakan Penduduk")
-        st.write("Cek status kelayakan hidup seorang penduduk berdasarkan ID-nya. Data dianalisis berdasarkan gaji sektoral, UMR, pengeluaran, serta Faktor Alpha (α).")
-        st.button(
-            "Buka Halaman Kelayakan →", 
-            use_container_width=True, 
-            key="btn_layak", 
-            on_click=ganti_halaman, 
-            args=(DAFTAR_HALAMAN[3],)
-        )
-
-    with col4:
-        st.markdown("### 📊 Report & Analisis Daerah")
-        st.write("Lihat laporan makroekonomi agregat per provinsi: grafik UMR vs pengeluaran, distribusi kategori belanja, dan tren keuangan masyarakat.")
+        st.markdown("### 📊 Report Daerah")
+        st.write("Lihat laporan makroekonomi agregat per provinsi: grafik UMR vs pengeluaran, serta distribusi kategori belanja.")
         st.button(
             "Buka Halaman Report →", 
             use_container_width=True, 
-            key="btn_report", 
+            key="btn_hal3", 
             on_click=ganti_halaman, 
-            args=(DAFTAR_HALAMAN[4],)
+            args=(DAFTAR_HALAMAN[3],)
         )
 
     st.markdown("---")
@@ -262,181 +252,154 @@ if menu == DAFTAR_HALAMAN[0]:
     s1.metric("Total Penduduk Terdata", f"{total_penduduk:,} Orang")
     s2.metric("Provinsi Terdaftar",     f"{total_prov_db} Provinsi")
     s3.metric("Tanggal Akses",          str(date.today()))
-# ==============================================================================
-# HALAMAN 1 — INPUT PENDUDUK BARU
-# ==============================================================================
-elif menu == "📝 Input Penduduk Baru":
-    st.button("⬅️ Kembali ke Beranda", on_click=ganti_halaman, args=(DAFTAR_HALAMAN[0],), key="back_input")
-    st.title("📝 Input Data Penduduk Baru")
-    st.write("Formulir untuk mendaftarkan penduduk baru beserta rincian pengeluaran bulanannya.")
 
-    if 'temp_pengeluaran' not in st.session_state:
-        st.session_state.temp_pengeluaran = {}
-
-    col1, col2 = st.columns([1, 1])
-
-    with col1:
-        st.subheader("A. Identitas Penduduk")
-
-        # ID otomatis — hanya ditampilkan, tidak bisa diedit
-        next_id = get_next_id_penduduk()
-        st.markdown(
-            f"""
-            <div style="
-                background: #1e3a5f;
-                border: 1.5px solid #2e86de;
-                border-radius: 8px;
-                padding: 10px 16px;
-                margin-bottom: 12px;
-            ">
-                <span style="color:#a8c6e8; font-size:13px;">🆔 ID Penduduk (Otomatis & Unik)</span><br>
-                <span style="color:#ffffff; font-size:22px; font-weight:700; letter-spacing:2px;">{next_id}</span><br>
-                <span style="color:#7f9fc0; font-size:11px;">Digenerate otomatis dari database — tidak dapat diubah</span>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        nama_penduduk = st.text_input("Nama Lengkap Penduduk", placeholder="Contoh: Budi Santoso")
-        usia = st.number_input("Usia (Tahun)", min_value=15, max_value=90, value=25)
-
-        pilihan_prov = st.selectbox("Domisili Provinsi", df_provinsi['nama_provinsi'])
-        row_prov = df_provinsi[df_provinsi['nama_provinsi'] == pilihan_prov].iloc[0]
-        st.caption(f"UMR Provinsi terpilih: Rp{int(row_prov['umr']):,}")
-
-        pilihan_prof = st.selectbox("Sektor Profesi", df_profesi['sektor_profesi'])
-        row_prof = df_profesi[df_profesi['sektor_profesi'] == pilihan_prof].iloc[0]
-        st.caption(f"Estimasi Gaji Sektoral (BPS): Rp{int(row_prof['estimasi_gaji']):,}")
-
-    with col2:
-        st.subheader("B. Rincian Pengeluaran Bulanan")
-
-        pilihan_kat = st.selectbox("Pilih Kategori Pengeluaran", df_kategori['nama_kategori'])
-        row_kat = df_kategori[df_kategori['nama_kategori'] == pilihan_kat].iloc[0]
-        st.info(f"**Deskripsi:** {row_kat['deskripsi']}")
-
-        nominal_input = st.number_input("Nominal Pengeluaran (Rp)", min_value=0, step=50000, value=0)
-
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("➕ Tambah Kategori"):
-                if nominal_input > 0:
-                    st.session_state.temp_pengeluaran[int(row_kat['id_kategori'])] = int(nominal_input)
-                    st.toast(f"Ditambahkan: {pilihan_kat}")
-                else:
-                    st.warning("Nominal harus lebih dari 0.")
-        with c2:
-            if st.button("🎲 Auto-Generate Biaya"):
-                gaji = row_prof['estimasi_gaji']
-                st.session_state.temp_pengeluaran = {
-                    301: int(gaji * random.uniform(0.25, 0.35)),
-                    302: int(gaji * random.uniform(0.20, 0.30)),
-                    303: int(gaji * random.uniform(0.08, 0.15)),
-                    307: int(gaji * random.uniform(0.05, 0.10)),
-                    310: int(gaji * random.uniform(0.05, 0.12)),
-                }
-                st.toast("Pengeluaran otomatis dibuat!")
-
-        if st.session_state.temp_pengeluaran:
-            rows_tmp = []
-            total_tmp = 0
-            for k_id, nom in st.session_state.temp_pengeluaran.items():
-                nama_k_arr = df_kategori[df_kategori['id_kategori'] == k_id]['nama_kategori'].values
-                nama_k = nama_k_arr[0] if len(nama_k_arr) > 0 else f"ID {k_id}"
-                rows_tmp.append({"Kategori": nama_k, "Nominal": f"Rp{nom:,}"})
-                total_tmp += nom
-            st.table(pd.DataFrame(rows_tmp))
-            st.metric("Total Sementara", f"Rp{total_tmp:,}")
-
-            if st.button("🗑️ Kosongkan"):
-                st.session_state.temp_pengeluaran = {}
-                st.rerun()
-
-    st.markdown("---")
-    if st.button("💾 SIMPAN KE DATABASE", use_container_width=True):
-        if not nama_penduduk.strip():
-            st.error("Nama penduduk tidak boleh kosong!")
-        elif not st.session_state.temp_pengeluaran:
-            st.error("Masukkan minimal satu pengeluaran sebelum menyimpan!")
-        else:
-            try:
-                id_final = get_next_id_penduduk()
-                # TIDAK PERLU MENGUBAH %s KARENA PYMYSQL JUGA MENGGUNAKAN %s
-                with conn.cursor() as cur:
-                    cur.execute(
-                        "INSERT INTO Penduduk (id_penduduk, nama_penduduk, usia, id_provinsi, id_profesi) "
-                        "VALUES (%s, %s, %s, %s, %s);",
-                        (id_final, nama_penduduk.strip(), int(usia),
-                         int(row_prov['id_provinsi']), int(row_prof['id_profesi']))
-                    )
-                    for k_id, nom in st.session_state.temp_pengeluaran.items():
-                        cur.execute(
-                            "INSERT INTO Pengeluaran (tanggal_catat, nominal, id_penduduk, id_kategori) "
-                            "VALUES (%s, %s, %s, %s);",
-                            (date.today(), int(nom), id_final, int(k_id))
-                        )
-                st.success(f"✅ Data **{nama_penduduk}** berhasil disimpan dengan ID **{id_final}**.")
-                st.info("🔒 Simpan ID ini untuk keperluan pengecekan kelayakan atau update data di kemudian hari.")
-                st.session_state.temp_pengeluaran = {}
-            except Exception as ex:
-                st.error(f"Gagal menyimpan. Transaksi dibatalkan. Error: {ex}")
 
 # ==============================================================================
-# HALAMAN 2 — UPDATE & SIMULASI PINDAH PROVINSI
+# HALAMAN 1 — INPUT & UPDATE DATA PENDUDUK
 # ==============================================================================
-elif menu == "🔄 Update & Simulasi Pindah":
-    st.button("⬅️ Kembali ke Beranda", on_click=ganti_halaman, args=(DAFTAR_HALAMAN[0],), key="back_update")
-    st.title("🔄 Update Data & Simulasi Pindah Provinsi")
-    st.write(
-        "Masukkan ID Penduduk untuk memperbarui data atau mensimulasikan dampak pindah provinsi "
-        "terhadap proyeksi pengeluaran dan kelayakan hidup."
-    )
+elif menu == DAFTAR_HALAMAN[1]:
+    st.button("⬅️ Kembali ke Beranda", on_click=ganti_halaman, args=(DAFTAR_HALAMAN[0],), key="back_hal1")
+    st.title("👥 Manajemen Data Penduduk")
+    
+    tab_input, tab_update = st.tabs(["📝 Input Penduduk Baru", "✏️ Update Data Penduduk"])
 
-    id_input_upd = st.number_input(
-        "🔑 Masukkan ID Penduduk", min_value=1, step=1, value=1,
-        help="ID penduduk diberikan saat pertama kali mendaftar."
-    )
+    # ---------------- TAB 1: INPUT ----------------
+    with tab_input:
+        st.write("Formulir untuk mendaftarkan penduduk baru beserta rincian pengeluaran bulanannya.")
+        if 'temp_pengeluaran' not in st.session_state:
+            st.session_state.temp_pengeluaran = {}
 
-    if st.button("🔍 Cari Data Penduduk", key="cari_upd"):
-        q = """
-            SELECT pen.id_penduduk, pen.nama_penduduk, pen.usia,
-                   prov.id_provinsi, prov.nama_provinsi, prov.umr,
-                   prof.id_profesi, prof.sektor_profesi, prof.estimasi_gaji,
-                   COALESCE(SUM(peng.nominal), 0) AS total_pengeluaran
-            FROM Penduduk pen
-            JOIN Provinsi prov ON pen.id_provinsi = prov.id_provinsi
-            JOIN Profesi prof  ON pen.id_profesi  = prof.id_profesi
-            LEFT JOIN Pengeluaran peng ON pen.id_penduduk = peng.id_penduduk
-            WHERE pen.id_penduduk = %s
-            GROUP BY pen.id_penduduk, pen.nama_penduduk, pen.usia,
-                     prov.id_provinsi, prov.nama_provinsi, prov.umr,
-                     prof.id_profesi, prof.sektor_profesi, prof.estimasi_gaji;
-        """
-        df_found = run_query(q, (int(id_input_upd),))
-        if df_found is not None and not df_found.empty:
-            st.session_state["upd_data"] = df_found.iloc[0].to_dict()
-        else:
-            st.error("ID Penduduk tidak ditemukan. Pastikan ID sudah benar.")
-            if "upd_data" in st.session_state:
-                del st.session_state["upd_data"]
+        c_in1, c_in2 = st.columns([1, 1])
 
-    if "upd_data" in st.session_state:
-        d = st.session_state["upd_data"]
+        with c_in1:
+            st.subheader("A. Identitas Penduduk")
+            next_id = get_next_id_penduduk()
+            st.markdown(
+                f"""
+                <div style="background: #1e3a5f; border: 1.5px solid #2e86de; border-radius: 8px; padding: 10px 16px; margin-bottom: 12px;">
+                    <span style="color:#a8c6e8; font-size:13px;">🆔 ID Penduduk (Otomatis & Unik)</span><br>
+                    <span style="color:#ffffff; font-size:22px; font-weight:700; letter-spacing:2px;">{next_id}</span><br>
+                    <span style="color:#7f9fc0; font-size:11px;">Digenerate otomatis dari database — tidak dapat diubah</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            nama_penduduk = st.text_input("Nama Lengkap Penduduk", placeholder="Contoh: Budi Santoso")
+            usia = st.number_input("Usia (Tahun)", min_value=15, max_value=90, value=25)
+
+            pilihan_prov = st.selectbox("Domisili Provinsi", df_provinsi['nama_provinsi'])
+            row_prov = df_provinsi[df_provinsi['nama_provinsi'] == pilihan_prov].iloc[0]
+            st.caption(f"UMR Provinsi terpilih: Rp{int(row_prov['umr']):,}")
+
+            pilihan_prof = st.selectbox("Sektor Profesi", df_profesi['sektor_profesi'])
+            row_prof = df_profesi[df_profesi['sektor_profesi'] == pilihan_prof].iloc[0]
+            st.caption(f"Estimasi Gaji Sektoral (BPS): Rp{int(row_prof['estimasi_gaji']):,}")
+
+        with c_in2:
+            st.subheader("B. Rincian Pengeluaran Bulanan")
+            pilihan_kat = st.selectbox("Pilih Kategori Pengeluaran", df_kategori['nama_kategori'])
+            row_kat = df_kategori[df_kategori['nama_kategori'] == pilihan_kat].iloc[0]
+            st.info(f"**Deskripsi:** {row_kat['deskripsi']}")
+
+            nominal_input = st.number_input("Nominal Pengeluaran (Rp)", min_value=0, step=50000, value=0)
+
+            c_btn1, c_btn2 = st.columns(2)
+            with c_btn1:
+                if st.button("➕ Tambah Kategori"):
+                    if nominal_input > 0:
+                        st.session_state.temp_pengeluaran[int(row_kat['id_kategori'])] = int(nominal_input)
+                        st.toast(f"Ditambahkan: {pilihan_kat}")
+                    else:
+                        st.warning("Nominal harus lebih dari 0.")
+            with c_btn2:
+                if st.button("🎲 Auto-Generate Biaya"):
+                    gaji = row_prof['estimasi_gaji']
+                    st.session_state.temp_pengeluaran = {
+                        301: int(gaji * random.uniform(0.25, 0.35)),
+                        302: int(gaji * random.uniform(0.20, 0.30)),
+                        303: int(gaji * random.uniform(0.08, 0.15)),
+                        307: int(gaji * random.uniform(0.05, 0.10)),
+                        310: int(gaji * random.uniform(0.05, 0.12)),
+                    }
+                    st.toast("Pengeluaran otomatis dibuat!")
+
+            if st.session_state.temp_pengeluaran:
+                rows_tmp = []
+                total_tmp = 0
+                for k_id, nom in st.session_state.temp_pengeluaran.items():
+                    nama_k_arr = df_kategori[df_kategori['id_kategori'] == k_id]['nama_kategori'].values
+                    nama_k = nama_k_arr[0] if len(nama_k_arr) > 0 else f"ID {k_id}"
+                    rows_tmp.append({"Kategori": nama_k, "Nominal": f"Rp{nom:,}"})
+                    total_tmp += nom
+                st.table(pd.DataFrame(rows_tmp))
+                st.metric("Total Sementara", f"Rp{total_tmp:,}")
+
+                if st.button("🗑️ Kosongkan"):
+                    st.session_state.temp_pengeluaran = {}
+                    st.rerun()
 
         st.markdown("---")
-        st.markdown(f"**Penduduk ditemukan:** {d['nama_penduduk']} | Usia: {d['usia']} thn")
+        if st.button("💾 SIMPAN KE DATABASE", use_container_width=True):
+            if not nama_penduduk.strip():
+                st.error("Nama penduduk tidak boleh kosong!")
+            elif not st.session_state.temp_pengeluaran:
+                st.error("Masukkan minimal satu pengeluaran sebelum menyimpan!")
+            else:
+                try:
+                    id_final = get_next_id_penduduk()
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            "INSERT INTO Penduduk (id_penduduk, nama_penduduk, usia, id_provinsi, id_profesi) "
+                            "VALUES (%s, %s, %s, %s, %s);",
+                            (id_final, nama_penduduk.strip(), int(usia), int(row_prov['id_provinsi']), int(row_prof['id_profesi']))
+                        )
+                        for k_id, nom in st.session_state.temp_pengeluaran.items():
+                            cur.execute(
+                                "INSERT INTO Pengeluaran (tanggal_catat, nominal, id_penduduk, id_kategori) "
+                                "VALUES (%s, %s, %s, %s);",
+                                (date.today(), int(nom), id_final, int(k_id))
+                            )
+                    st.success(f"✅ Data **{nama_penduduk}** berhasil disimpan dengan ID **{id_final}**.")
+                    st.info("🔒 Simpan ID ini untuk keperluan pengecekan kelayakan atau update data.")
+                    st.session_state.temp_pengeluaran = {}
+                except Exception as ex:
+                    st.error(f"Gagal menyimpan. Transaksi dibatalkan. Error: {ex}")
 
-        tab_update, tab_simulasi = st.tabs(["✏️ Update Data", "🗺️ Simulasi Pindah Provinsi"])
+    # ---------------- TAB 2: UPDATE ----------------
+    with tab_update:
+        st.write("Masukkan ID Penduduk untuk memperbarui profil domisili atau profesi.")
+        id_input_upd = st.number_input("🔑 Masukkan ID Penduduk", min_value=1, step=1, value=1, key="id_update")
 
-        # --- TAB UPDATE DATA ---
-        with tab_update:
-            st.subheader("✏️ Perbarui Informasi Penduduk")
-            nama_baru = st.text_input("Nama Lengkap", value=d['nama_penduduk'])
-            usia_baru = st.number_input("Usia", min_value=15, max_value=90, value=int(d['usia']))
+        if st.button("🔍 Cari Data", key="cari_upd"):
+            q_upd = """
+                SELECT pen.id_penduduk, pen.nama_penduduk, pen.usia,
+                       prov.id_provinsi, prov.nama_provinsi,
+                       prof.id_profesi, prof.sektor_profesi
+                FROM Penduduk pen
+                JOIN Provinsi prov ON pen.id_provinsi = prov.id_provinsi
+                JOIN Profesi prof  ON pen.id_profesi  = prof.id_profesi
+                WHERE pen.id_penduduk = %s
+            """
+            df_found = run_query(q_upd, (int(id_input_upd),))
+            if df_found is not None and not df_found.empty:
+                st.session_state["upd_data"] = df_found.iloc[0].to_dict()
+            else:
+                st.error("ID Penduduk tidak ditemukan.")
+                if "upd_data" in st.session_state:
+                    del st.session_state["upd_data"]
 
-            st.markdown("#### Opsi Pembaruan Spesifik")
-            # Cekbox untuk menampilkan dropdown jika ingin diubah
-            ubah_prov = st.checkbox("🏙️ Ubah Domisili Provinsi")
+        if "upd_data" in st.session_state:
+            d = st.session_state["upd_data"]
+            st.markdown("---")
+            st.info(f"**Data Ditemukan:** {d['nama_penduduk']} (Usia: {d['usia']} thn)")
+
+            nama_baru = st.text_input("Nama Lengkap", value=d['nama_penduduk'], key="nama_upd")
+            usia_baru = st.number_input("Usia", min_value=15, max_value=90, value=int(d['usia']), key="usia_upd")
+
+            st.markdown("#### 📝 Pilih Data yang Ingin Diubah")
+            
+            ubah_prov = st.checkbox("🏙️ Ubah Domisili Provinsi", key="chk_prov_upd")
             if ubah_prov:
                 sorted_prov_names = df_provinsi['nama_provinsi'].tolist()
                 idx_default_prov = sorted_prov_names.index(d['nama_provinsi']) if d['nama_provinsi'] in sorted_prov_names else 0
@@ -446,7 +409,7 @@ elif menu == "🔄 Update & Simulasi Pindah":
             else:
                 id_prov_final = int(d['id_provinsi'])
 
-            ubah_prof = st.checkbox("💼 Ubah Sektor Profesi")
+            ubah_prof = st.checkbox("💼 Ubah Sektor Profesi", key="chk_prof_upd")
             if ubah_prof:
                 sorted_prof_names = df_profesi['sektor_profesi'].tolist()
                 idx_default_prof = sorted_prof_names.index(d['sektor_profesi']) if d['sektor_profesi'] in sorted_prof_names else 0
@@ -466,26 +429,91 @@ elif menu == "🔄 Update & Simulasi Pindah":
                             (nama_baru.strip(), int(usia_baru), id_prov_final, id_prof_final, int(d['id_penduduk']))
                         )
                     st.success("✅ Data berhasil diperbarui!")
-                    del st.session_state["upd_data"] # Reset session agar memuat data terbaru
+                    del st.session_state["upd_data"] 
                     st.rerun()
                 except Exception as ex:
                     st.error(f"Gagal update. Error: {ex}")
 
-        # --- TAB SIMULASI ---
+
+# ==============================================================================
+# HALAMAN 2 — KELAYAKAN & SIMULASI
+# ==============================================================================
+elif menu == DAFTAR_HALAMAN[2]:
+    st.button("⬅️ Kembali ke Beranda", on_click=ganti_halaman, args=(DAFTAR_HALAMAN[0],), key="back_hal2")
+    st.title("⚖️ Analisis Kelayakan & Simulasi")
+    st.write("Masukkan ID Penduduk untuk melihat evaluasi kelayakan finansial saat ini, dan mensimulasikan masa depan.")
+
+    id_input_analisis = st.number_input("🔑 Masukkan ID Penduduk", min_value=1, step=1, value=1, key="id_analisis")
+
+    if st.button("🔍 Cari & Analisis", use_container_width=True):
+        q_analisis = """
+            SELECT pen.id_penduduk, pen.nama_penduduk, pen.usia,
+                   prov.nama_provinsi, prov.umr,
+                   prof.sektor_profesi, prof.estimasi_gaji,
+                   COALESCE(SUM(peng.nominal), 0) AS total_pengeluaran
+            FROM Penduduk pen
+            JOIN Provinsi prov ON pen.id_provinsi = prov.id_provinsi
+            JOIN Profesi prof  ON pen.id_profesi  = prof.id_profesi
+            LEFT JOIN Pengeluaran peng ON pen.id_penduduk = peng.id_penduduk
+            WHERE pen.id_penduduk = %s
+            GROUP BY pen.id_penduduk, pen.nama_penduduk, pen.usia,
+                     prov.nama_provinsi, prov.umr,
+                     prof.sektor_profesi, prof.estimasi_gaji;
+        """
+        df_analisis = run_query(q_analisis, (int(id_input_analisis),))
+
+        if df_analisis is not None and not df_analisis.empty:
+            st.session_state["analisis_data"] = df_analisis.iloc[0].to_dict()
+        else:
+            st.error("ID Penduduk tidak ditemukan.")
+            if "analisis_data" in st.session_state:
+                del st.session_state["analisis_data"]
+
+    if "analisis_data" in st.session_state:
+        d = st.session_state["analisis_data"]
+        gaji_sek = float(d['estimasi_gaji'])
+        umr_lama = float(d['umr'])
+        pengeluaran_lama = float(d['total_pengeluaran'])
+
+        st.markdown("---")
+        st.markdown(
+            f"**👤 {d['nama_penduduk']}** | Usia: {d['usia']} thn | "
+            f"Provinsi: {d['nama_provinsi']} | Profesi: {d['sektor_profesi']}"
+        )
+
+        tab_kelayakan, tab_simulasi = st.tabs(["📋 Status Kelayakan Saat Ini", "🗺️ Simulasi Perubahan Masa Depan"])
+
+        # ---------------- TAB 1: KELAYAKAN ----------------
+        with tab_kelayakan:
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Estimasi Gaji Saat Ini", f"Rp{gaji_sek:,.0f}")
+            m2.metric("UMR Daerah Saat Ini", f"Rp{umr_lama:,.0f}")
+            m3.metric("Total Pengeluaran", f"Rp{pengeluaran_lama:,.0f}")
+
+            if pengeluaran_lama == 0:
+                st.warning("Belum ada data pengeluaran tercatat. Kelayakan dihitung berdasarkan gaji vs UMR saja.")
+
+            hasil_sekarang = hitung_skor_kelayakan(gaji_sek, umr_lama, pengeluaran_lama)
+            tampilkan_hasil_kelayakan(hasil_sekarang)
+
+            st.markdown("---")
+            st.subheader("📂 Rincian Transaksi Pengeluaran")
+            q_detail = """
+                SELECT k.nama_kategori AS "Kategori", p.nominal AS "Nominal (Rp)", p.tanggal_catat AS "Tanggal"
+                FROM Pengeluaran p
+                JOIN Kategori_Biaya k ON p.id_kategori = k.id_kategori
+                WHERE p.id_penduduk = %s
+                ORDER BY p.nominal DESC;
+            """
+            df_detail = run_query(q_detail, (int(d['id_penduduk']),))
+            if df_detail is not None and not df_detail.empty:
+                df_detail["Nominal (Rp)"] = df_detail["Nominal (Rp)"].apply(lambda x: f"Rp{int(x):,}")
+                st.dataframe(df_detail, use_container_width=True, hide_index=True)
+            else:
+                st.info("Tidak ada rincian pengeluaran.")
+
+        # ---------------- TAB 2: SIMULASI ----------------
         with tab_simulasi:
-            st.subheader("🗺️ Simulasi Perubahan Karir & Domisili")
-            
-            umr_lama  = float(d['umr'])
-            gaji_sek  = float(d['estimasi_gaji'])
-            pengeluaran_lama = float(d['total_pengeluaran'])
-
-            st.info(
-                f"**Kondisi Saat Ini**\n\n"
-                f"🏙️ Provinsi: **{d['nama_provinsi']}** (UMR: Rp{umr_lama:,.0f})\n\n"
-                f"💼 Profesi: **{d['sektor_profesi']}** (Gaji: Rp{gaji_sek:,.0f})\n\n"
-                f"🛍️ Pengeluaran Bulanan: **Rp{pengeluaran_lama:,.0f}**"
-            )
-
             st.markdown("#### ⚙️ Pilih Skenario Simulasi")
             c_sim1, c_sim2 = st.columns(2)
             with c_sim1:
@@ -493,7 +521,6 @@ elif menu == "🔄 Update & Simulasi Pindah":
             with c_sim2:
                 sim_prof = st.checkbox("🏢 Simulasi Ganti Profesi")
 
-            # Nilai default jika tidak dicentang
             umr_baru = umr_lama
             nama_prov_baru = d['nama_provinsi']
             gaji_dasar_baru = gaji_sek
@@ -512,19 +539,15 @@ elif menu == "🔄 Update & Simulasi Pindah":
                 nama_prof_baru = row_prof_sim['sektor_profesi']
 
             if not sim_prov and not sim_prof:
-                st.warning("👈 Silakan centang setidaknya satu skenario simulasi di atas untuk melihat proyeksi.")
+                st.info("👈 Silakan centang setidaknya satu skenario di atas untuk memproyeksikan masa depan.")
             else:
-                # 1. Hitung delta UMR
                 if umr_lama > 0:
                     delta_umr = (umr_baru - umr_lama) / umr_lama
                 else:
                     delta_umr = 0
                 persen_perubahan_umr = delta_umr * 100
-
-                # 2. Proyeksi Pengeluaran (Naik mengikuti delta UMR)
                 pengeluaran_proyeksi = pengeluaran_lama * (1 + delta_umr)
 
-                # 3. Proyeksi Gaji Sistem (Menggunakan gaji_dasar profesi baru/lama dikali alpha dari inflasi kota)
                 alpha = 0.5
                 gaji_proyeksi_sistem = gaji_dasar_baru * (1 + (delta_umr * alpha))
 
@@ -535,9 +558,7 @@ elif menu == "🔄 Update & Simulasi Pindah":
                 if punya_tawaran:
                     gaji_final = st.number_input(
                         "Masukkan Nominal Gaji Baru (Rp)", 
-                        min_value=0, 
-                        value=int(gaji_proyeksi_sistem),
-                        step=100000
+                        min_value=0, value=int(gaji_proyeksi_sistem), step=100000
                     )
                     keterangan_gaji = "Gaji Faktual (Input Manual)"
                 else:
@@ -566,13 +587,12 @@ elif menu == "🔄 Update & Simulasi Pindah":
 
                 arah_pengeluaran = "naik" if pengeluaran_proyeksi > pengeluaran_lama else "turun"
                 
-                # Teks penjelasan otomatis menyesuaikan kondisi yang dipilih
                 if sim_prov and sim_prof:
-                    st.caption(f"Pindah ke **{nama_prov_baru}** & ganti profesi jadi **{nama_prof_baru}**. Pengeluaran {arah_pengeluaran} mengikuti UMR baru. Gaji disesuaikan dengan profesi baru dan diredam faktor $\\alpha=0.5$.")
+                    st.caption(f"Pindah ke **{nama_prov_baru}** & ganti profesi jadi **{nama_prof_baru}**. Pengeluaran {arah_pengeluaran} mengikuti UMR baru. Gaji disesuaikan dan diredam faktor $\\alpha=0.5$.")
                 elif sim_prov:
                     st.caption(f"Pindah ke **{nama_prov_baru}** (Profesi sama). Pengeluaran {arah_pengeluaran} mengikuti UMR baru. Gaji diredam faktor $\\alpha=0.5$.")
                 elif sim_prof:
-                    st.caption(f"Ganti profesi jadi **{nama_prof_baru}** (Kota sama). Pengeluaran tetap, skor kelayakan berubah murni karena perubahan Gaji Dasar.")
+                    st.caption(f"Ganti profesi jadi **{nama_prof_baru}** (Kota sama). Pengeluaran tetap, kelayakan berubah murni karena gaji baru.")
 
                 st.markdown("#### ⚖️ Kelayakan Hidup Pasca-Simulasi")
                 hasil_sim = hitung_skor_kelayakan(gaji_final, umr_baru, pengeluaran_proyeksi)
@@ -589,89 +609,12 @@ elif menu == "🔄 Update & Simulasi Pindah":
                         st.markdown(f"**Setelah Simulasi**")
                         st.markdown(f"{hasil_sim['warna']} **{hasil_sim['kategori']}** — Skor {hasil_sim['total_skor']}/9")
 
-# ==============================================================================
-# HALAMAN 3 — KELAYAKAN PENDUDUK
-# ==============================================================================
-elif menu == "📋 Kelayakan Penduduk":
-    st.button("⬅️ Kembali ke Beranda", on_click=ganti_halaman, args=(DAFTAR_HALAMAN[0],), key="back_kelayakan")
-    st.title("📋 Analisis Kelayakan Hidup Penduduk")
-    st.write(
-        "Masukkan ID Penduduk untuk melihat analisis kelayakan hidup berdasarkan "
-        "gaji sektoral, UMR daerah, total pengeluaran bulanan, dan Faktor Alpha (α)."
-    )
-    st.caption("Pencarian menggunakan ID.")
-
-    id_input_kel = st.number_input(
-        "🔑 Masukkan ID Penduduk",
-        min_value=1, step=1, value=1,
-        help="ID Penduduk diberikan saat pertama kali mendaftar di sistem ini."
-    )
-
-    if st.button("🔍 Cek Kelayakan", use_container_width=True):
-        q_kel = """
-            SELECT pen.id_penduduk, pen.nama_penduduk, pen.usia,
-                   prov.nama_provinsi, prov.umr,
-                   prof.sektor_profesi, prof.estimasi_gaji,
-                   COALESCE(SUM(peng.nominal), 0) AS total_pengeluaran
-            FROM Penduduk pen
-            JOIN Provinsi prov ON pen.id_provinsi = prov.id_provinsi
-            JOIN Profesi prof  ON pen.id_profesi  = prof.id_profesi
-            LEFT JOIN Pengeluaran peng ON pen.id_penduduk = peng.id_penduduk
-            WHERE pen.id_penduduk = %s
-            GROUP BY pen.id_penduduk, pen.nama_penduduk, pen.usia,
-                     prov.nama_provinsi, prov.umr,
-                     prof.sektor_profesi, prof.estimasi_gaji;
-        """
-        df_kel = run_query(q_kel, (int(id_input_kel),))
-
-        if df_kel is None or df_kel.empty:
-            st.error("ID Penduduk tidak ditemukan. Pastikan ID sudah benar.")
-        else:
-            r = df_kel.iloc[0]
-            gaji        = float(r['estimasi_gaji'])
-            umr         = float(r['umr'])
-            total_bel   = float(r['total_pengeluaran'])
-
-            st.markdown("---")
-            st.markdown(
-                f"**👤 {r['nama_penduduk']}** | Usia: {r['usia']} thn | "
-                f"Provinsi: {r['nama_provinsi']} | Profesi: {r['sektor_profesi']}"
-            )
-
-            m1, m2, m3 = st.columns(3)
-            m1.metric("Estimasi Gaji",      f"Rp{gaji:,.0f}")
-            m2.metric("UMR Daerah",         f"Rp{umr:,.0f}")
-            m3.metric("Total Pengeluaran",  f"Rp{total_bel:,.0f}")
-
-            st.markdown("---")
-
-            if total_bel == 0:
-                st.warning("Belum ada data pengeluaran tercatat untuk penduduk ini. Kelayakan dihitung berdasarkan gaji vs UMR saja.")
-
-            hasil = hitung_skor_kelayakan(gaji, umr, total_bel)
-            tampilkan_hasil_kelayakan(hasil)
-
-            st.markdown("---")
-            st.subheader("📂 Rincian Pengeluaran per Kategori")
-            q_detail_kel = """
-                SELECT k.nama_kategori AS "Kategori", p.nominal AS "Nominal (Rp)", p.tanggal_catat AS "Tanggal"
-                FROM Pengeluaran p
-                JOIN Kategori_Biaya k ON p.id_kategori = k.id_kategori
-                WHERE p.id_penduduk = %s
-                ORDER BY p.nominal DESC;
-            """
-            df_detail_kel = run_query(q_detail_kel, (int(id_input_kel),))
-            if df_detail_kel is not None and not df_detail_kel.empty:
-                df_detail_kel["Nominal (Rp)"] = df_detail_kel["Nominal (Rp)"].apply(lambda x: f"Rp{int(x):,}")
-                st.dataframe(df_detail_kel, use_container_width=True, hide_index=True)
-            else:
-                st.info("Tidak ada rincian pengeluaran tercatat.")
 
 # ==============================================================================
-# HALAMAN 4 — REPORT & ANALISIS DAERAH
+# HALAMAN 3 — REPORT & ANALISIS DAERAH
 # ==============================================================================
-elif menu == "📊 Report & Analisis Daerah":
-    st.button("⬅️ Kembali ke Beranda", on_click=ganti_halaman, args=(DAFTAR_HALAMAN[0],), key="back_report")
+elif menu == DAFTAR_HALAMAN[3]:
+    st.button("⬅️ Kembali ke Beranda", on_click=ganti_halaman, args=(DAFTAR_HALAMAN[0],), key="back_hal3")
     st.title("📊 Dashboard Laporan Makroekonomi Daerah")
     st.write("Analisis agregasi real-time data pengeluaran masyarakat berbanding standar upah daerah.")
 
