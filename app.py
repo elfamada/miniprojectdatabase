@@ -430,145 +430,165 @@ elif menu == "🔄 Update & Simulasi Pindah":
 
         # --- TAB UPDATE DATA ---
         with tab_update:
-            st.subheader("Perbarui Informasi Penduduk")
+            st.subheader("✏️ Perbarui Informasi Penduduk")
             nama_baru = st.text_input("Nama Lengkap", value=d['nama_penduduk'])
             usia_baru = st.number_input("Usia", min_value=15, max_value=90, value=int(d['usia']))
 
-            sorted_prov_names = df_provinsi['nama_provinsi'].tolist()
-            idx_default_prov_sorted = sorted_prov_names.index(d['nama_provinsi']) \
-                if d['nama_provinsi'] in sorted_prov_names else 0
-            pilihan_prov_upd = st.selectbox(
-                "Domisili Provinsi",
-                df_provinsi['nama_provinsi'],
-                index=idx_default_prov_sorted,
-                key="prov_upd"
-            )
-            row_prov_upd = df_provinsi[df_provinsi['nama_provinsi'] == pilihan_prov_upd].iloc[0]
-            st.caption(f"UMR Provinsi terpilih: Rp{int(row_prov_upd['umr']):,}")
+            st.markdown("#### Opsi Pembaruan Spesifik")
+            # Cekbox untuk menampilkan dropdown jika ingin diubah
+            ubah_prov = st.checkbox("🏙️ Ubah Domisili Provinsi")
+            if ubah_prov:
+                sorted_prov_names = df_provinsi['nama_provinsi'].tolist()
+                idx_default_prov = sorted_prov_names.index(d['nama_provinsi']) if d['nama_provinsi'] in sorted_prov_names else 0
+                pilihan_prov_upd = st.selectbox("Pilih Provinsi Baru", df_provinsi['nama_provinsi'], index=idx_default_prov, key="prov_upd")
+                row_prov_upd = df_provinsi[df_provinsi['nama_provinsi'] == pilihan_prov_upd].iloc[0]
+                id_prov_final = int(row_prov_upd['id_provinsi'])
+            else:
+                id_prov_final = int(d['id_provinsi'])
 
-            sorted_prof_names = df_profesi['sektor_profesi'].tolist()
-            idx_default_prof = sorted_prof_names.index(d['sektor_profesi']) \
-                if d['sektor_profesi'] in sorted_prof_names else 0
-            pilihan_prof_upd = st.selectbox(
-                "Sektor Profesi", df_profesi['sektor_profesi'],
-                index=idx_default_prof, key="prof_upd"
-            )
-            row_prof_upd = df_profesi[df_profesi['sektor_profesi'] == pilihan_prof_upd].iloc[0]
+            ubah_prof = st.checkbox("💼 Ubah Sektor Profesi")
+            if ubah_prof:
+                sorted_prof_names = df_profesi['sektor_profesi'].tolist()
+                idx_default_prof = sorted_prof_names.index(d['sektor_profesi']) if d['sektor_profesi'] in sorted_prof_names else 0
+                pilihan_prof_upd = st.selectbox("Pilih Profesi Baru", df_profesi['sektor_profesi'], index=idx_default_prof, key="prof_upd")
+                row_prof_upd = df_profesi[df_profesi['sektor_profesi'] == pilihan_prof_upd].iloc[0]
+                id_prof_final = int(row_prof_upd['id_profesi'])
+            else:
+                id_prof_final = int(d['id_profesi'])
 
+            st.markdown("---")
             if st.button("💾 Simpan Perubahan Data", use_container_width=True):
                 try:
                     with conn.cursor() as cur:
                         cur.execute(
                             "UPDATE Penduduk SET nama_penduduk=%s, usia=%s, id_provinsi=%s, id_profesi=%s "
                             "WHERE id_penduduk=%s;",
-                            (nama_baru.strip(), int(usia_baru),
-                             int(row_prov_upd['id_provinsi']), int(row_prof_upd['id_profesi']),
-                             int(d['id_penduduk']))
+                            (nama_baru.strip(), int(usia_baru), id_prov_final, id_prof_final, int(d['id_penduduk']))
                         )
                     st.success("✅ Data berhasil diperbarui!")
-                    del st.session_state["upd_data"]
+                    del st.session_state["upd_data"] # Reset session agar memuat data terbaru
                     st.rerun()
                 except Exception as ex:
                     st.error(f"Gagal update. Error: {ex}")
 
-        # --- TAB SIMULASI PINDAH PROVINSI ---
+        # --- TAB SIMULASI ---
         with tab_simulasi:
-            st.subheader("Simulasi: Bagaimana jika pindah provinsi?")
-            st.write(
-                "Sistem akan memproyeksikan pengeluaran di provinsi baru berdasarkan "
-                "persentase perubahan UMR, lalu menghitung ulang kelayakan hidup."
-            )
-
+            st.subheader("🗺️ Simulasi Perubahan Karir & Domisili")
+            
             umr_lama  = float(d['umr'])
             gaji_sek  = float(d['estimasi_gaji'])
             pengeluaran_lama = float(d['total_pengeluaran'])
 
             st.info(
-                f"**Kondisi saat ini** — Provinsi: {d['nama_provinsi']} | "
-                f"UMR: Rp{umr_lama:,.0f} | "
-                f"Gaji: Rp{gaji_sek:,.0f} | "
-                f"Total Pengeluaran: Rp{pengeluaran_lama:,.0f}"
+                f"**Kondisi Saat Ini**\n\n"
+                f"🏙️ Provinsi: **{d['nama_provinsi']}** (UMR: Rp{umr_lama:,.0f})\n\n"
+                f"💼 Profesi: **{d['sektor_profesi']}** (Gaji: Rp{gaji_sek:,.0f})\n\n"
+                f"🛍️ Pengeluaran Bulanan: **Rp{pengeluaran_lama:,.0f}**"
             )
 
-            pilihan_prov_sim = st.selectbox(
-                "🏙️ Pilih Provinsi Tujuan",
-                df_provinsi['nama_provinsi'],
-                key="prov_sim"
-            )
-            row_prov_sim = df_provinsi[df_provinsi['nama_provinsi'] == pilihan_prov_sim].iloc[0]
-            st.caption(f"UMR Provinsi tujuan: Rp{int(row_prov_sim['umr']):,}")
-            umr_baru = float(row_prov_sim['umr'])
-            nama_prov_baru = row_prov_sim['nama_provinsi']
+            st.markdown("#### ⚙️ Pilih Skenario Simulasi")
+            c_sim1, c_sim2 = st.columns(2)
+            with c_sim1:
+                sim_prov = st.checkbox("✈️ Simulasi Pindah Provinsi")
+            with c_sim2:
+                sim_prof = st.checkbox("🏢 Simulasi Ganti Profesi")
 
-            if nama_prov_baru == d['nama_provinsi']:
-                st.warning("Provinsi tujuan sama dengan provinsi saat ini.")
+            # Nilai default jika tidak dicentang
+            umr_baru = umr_lama
+            nama_prov_baru = d['nama_provinsi']
+            gaji_dasar_baru = gaji_sek
+            nama_prof_baru = d['sektor_profesi']
+
+            if sim_prov:
+                pilihan_prov_sim = st.selectbox("🏙️ Pilih Provinsi Tujuan", df_provinsi['nama_provinsi'], key="prov_sim")
+                row_prov_sim = df_provinsi[df_provinsi['nama_provinsi'] == pilihan_prov_sim].iloc[0]
+                umr_baru = float(row_prov_sim['umr'])
+                nama_prov_baru = row_prov_sim['nama_provinsi']
+
+            if sim_prof:
+                pilihan_prof_sim = st.selectbox("💼 Pilih Profesi Tujuan", df_profesi['sektor_profesi'], key="prof_sim")
+                row_prof_sim = df_profesi[df_profesi['sektor_profesi'] == pilihan_prof_sim].iloc[0]
+                gaji_dasar_baru = float(row_prof_sim['estimasi_gaji'])
+                nama_prof_baru = row_prof_sim['sektor_profesi']
+
+            if not sim_prov and not sim_prof:
+                st.warning("👈 Silakan centang setidaknya satu skenario simulasi di atas untuk melihat proyeksi.")
             else:
-                # BLOK FAKTOR ALPHA & PROYEKSI 
+                # 1. Hitung delta UMR
                 if umr_lama > 0:
-                    # 1. Hitung dulu persentase selisih UMR (Delta UMR)
                     delta_umr = (umr_baru - umr_lama) / umr_lama
                 else:
                     delta_umr = 0
-                
                 persen_perubahan_umr = delta_umr * 100
 
-                # 2. Proyeksikan pengeluaran baru (naik 100% mengikuti inflasi daerah)
+                # 2. Proyeksi Pengeluaran (Naik mengikuti delta UMR)
                 pengeluaran_proyeksi = pengeluaran_lama * (1 + delta_umr)
 
-                # 3. Proyeksikan gaji baru dengan faktor redaman (misal alpha = 0.5)
+                # 3. Proyeksi Gaji Sistem (Menggunakan gaji_dasar profesi baru/lama dikali alpha dari inflasi kota)
                 alpha = 0.5
-                gaji_proyeksi = gaji_sek * (1 + (delta_umr * alpha))
-                # ==========================================================
+                gaji_proyeksi_sistem = gaji_dasar_baru * (1 + (delta_umr * alpha))
 
                 st.markdown("---")
-                st.markdown("#### 📊 Hasil Proyeksi Pindah Provinsi")
+                st.markdown("#### 💰 Penyesuaian Gaji")
+                punya_tawaran = st.checkbox("Saya sudah tahu/memiliki tawaran nominal gaji baru")
+                
+                if punya_tawaran:
+                    gaji_final = st.number_input(
+                        "Masukkan Nominal Gaji Baru (Rp)", 
+                        min_value=0, 
+                        value=int(gaji_proyeksi_sistem),
+                        step=100000
+                    )
+                    keterangan_gaji = "Gaji Faktual (Input Manual)"
+                else:
+                    gaji_final = gaji_proyeksi_sistem
+                    keterangan_gaji = "Estimasi Gaji (Diredam α=0.5)"
+
+                st.markdown("---")
+                st.markdown("#### 📊 Hasil Proyeksi")
 
                 pm1, pm2, pm3 = st.columns(3)
                 pm1.metric(
-                    "UMR Lama → Baru",
-                    f"Rp{umr_baru:,.0f}",
-                    delta=f"{persen_perubahan_umr:+.1f}%",
+                    "Perubahan UMR", 
+                    f"Rp{umr_baru:,.0f}", 
+                    delta=f"{persen_perubahan_umr:+.1f}%" if sim_prov else "Tetap"
                 )
                 pm2.metric(
-                    "Proyeksi Pengeluaran Baru",
-                    f"Rp{pengeluaran_proyeksi:,.0f}",
-                    delta=f"Rp{pengeluaran_proyeksi - pengeluaran_lama:+,.0f}",
+                    "Proyeksi Pengeluaran Baru", 
+                    f"Rp{pengeluaran_proyeksi:,.0f}", 
+                    delta=f"Rp{pengeluaran_proyeksi - pengeluaran_lama:+,.0f}" if sim_prov else "Tetap"
                 )
                 pm3.metric(
-                    "Estimasi Gaji Baru (Diredam α=0.5)", 
-                    f"Rp{gaji_proyeksi:,.0f}",
-                    delta=f"Rp{gaji_proyeksi - gaji_sek:+,.0f}"
+                    keterangan_gaji, 
+                    f"Rp{gaji_final:,.0f}", 
+                    delta=f"Rp{gaji_final - gaji_sek:+,.0f}"
                 )
 
-                arah_umr = "naik" if persen_perubahan_umr > 0 else "turun"
                 arah_pengeluaran = "naik" if pengeluaran_proyeksi > pengeluaran_lama else "turun"
-                st.caption(
-                    f"UMR {arah_umr} **{abs(persen_perubahan_umr):.1f}%** dari {d['nama_provinsi']} ke {nama_prov_baru}. "
-                    f"Pengeluaran diproyeksikan **{arah_pengeluaran} 100%** mengikuti UMR, sementara Gaji diproyeksikan mengikuti UMR namun diredam oleh faktor $\\alpha=0.5$."
-                )
+                
+                # Teks penjelasan otomatis menyesuaikan kondisi yang dipilih
+                if sim_prov and sim_prof:
+                    st.caption(f"Pindah ke **{nama_prov_baru}** & ganti profesi jadi **{nama_prof_baru}**. Pengeluaran {arah_pengeluaran} mengikuti UMR baru. Gaji disesuaikan dengan profesi baru dan diredam faktor $\\alpha=0.5$.")
+                elif sim_prov:
+                    st.caption(f"Pindah ke **{nama_prov_baru}** (Profesi sama). Pengeluaran {arah_pengeluaran} mengikuti UMR baru. Gaji diredam faktor $\\alpha=0.5$.")
+                elif sim_prof:
+                    st.caption(f"Ganti profesi jadi **{nama_prof_baru}** (Kota sama). Pengeluaran tetap, skor kelayakan berubah murni karena perubahan Gaji Dasar.")
 
-                st.markdown("#### ⚖️ Kelayakan Hidup di Provinsi Baru")
-                # PENTING: Gunakan gaji_proyeksi untuk menghitung skor baru, bukan gaji_sek lama
-                hasil_sim = hitung_skor_kelayakan(gaji_proyeksi, umr_baru, pengeluaran_proyeksi)
+                st.markdown("#### ⚖️ Kelayakan Hidup Pasca-Simulasi")
+                hasil_sim = hitung_skor_kelayakan(gaji_final, umr_baru, pengeluaran_proyeksi)
                 tampilkan_hasil_kelayakan(hasil_sim)
 
-                # Bandingkan dengan kondisi lama
                 if pengeluaran_lama > 0:
                     hasil_lama = hitung_skor_kelayakan(gaji_sek, umr_lama, pengeluaran_lama)
-                    st.markdown("#### 🔁 Perbandingan Kelayakan")
+                    st.markdown("#### 🔁 Perbandingan Sebelum vs Sesudah")
                     cmp1, cmp2 = st.columns(2)
                     with cmp1:
-                        st.markdown(f"**Saat ini ({d['nama_provinsi']})**")
-                        st.markdown(
-                            f"{hasil_lama['warna']} **{hasil_lama['kategori']}** "
-                            f"— Skor {hasil_lama['total_skor']}/9"
-                        )
+                        st.markdown(f"**Saat ini**")
+                        st.markdown(f"{hasil_lama['warna']} **{hasil_lama['kategori']}** — Skor {hasil_lama['total_skor']}/9")
                     with cmp2:
-                        st.markdown(f"**Setelah pindah ({nama_prov_baru})**")
-                        st.markdown(
-                            f"{hasil_sim['warna']} **{hasil_sim['kategori']}** "
-                            f"— Skor {hasil_sim['total_skor']}/9"
-                        )
+                        st.markdown(f"**Setelah Simulasi**")
+                        st.markdown(f"{hasil_sim['warna']} **{hasil_sim['kategori']}** — Skor {hasil_sim['total_skor']}/9")
+
 # ==============================================================================
 # HALAMAN 3 — KELAYAKAN PENDUDUK
 # ==============================================================================
