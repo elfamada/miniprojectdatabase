@@ -441,7 +441,7 @@ elif menu == DAFTAR_HALAMAN[1]:
 elif menu == DAFTAR_HALAMAN[2]:
     st.button("⬅️ Kembali ke Beranda", on_click=ganti_halaman, args=(DAFTAR_HALAMAN[0],), key="back_hal2")
     st.title("⚖️ Analisis Kelayakan & Simulasi")
-    st.write("Masukkan ID Penduduk untuk melihat evaluasi kelayakan finansial saat ini, dan mensimulasikan masa depan.")
+    st.write("Masukkan ID Penduduk untuk melihat evaluasi kelayakan finansial saat ini, dan melihat proyeksi kelayakan jika ada perubahan karir atau domisili.")
 
     id_input_analisis = st.number_input("🔑 Masukkan ID Penduduk", min_value=1, step=1, value=1, key="id_analisis")
 
@@ -481,7 +481,7 @@ elif menu == DAFTAR_HALAMAN[2]:
             f"Provinsi: {d['nama_provinsi']} | Profesi: {d['sektor_profesi']}"
         )
 
-        tab_kelayakan, tab_simulasi = st.tabs(["📋 Status Kelayakan Saat Ini", "🗺️ Simulasi Perubahan Masa Depan"])
+        tab_kelayakan, tab_simulasi = st.tabs(["📋 Status Kelayakan Saat Ini", "🗺️ Simulasi Perubahan"])
 
         # ---------------- TAB 1: KELAYAKAN ----------------
         with tab_kelayakan:
