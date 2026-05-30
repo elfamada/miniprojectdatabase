@@ -3,6 +3,7 @@ import pymysql
 import pandas as pd
 import random
 import struct
+import matplotlib.pyplot as plt
 from datetime import date
 
 # ==============================================================================
@@ -232,7 +233,7 @@ if menu == DAFTAR_HALAMAN[0]:
 
     with col3:
         st.markdown("### 📊 Report Daerah")
-        st.write("Lihat laporan makroekonomi agregat per provinsi: grafik UMR vs pengeluaran, serta distribusi kategori belanja.")
+        st.write("Lihat agregasi data finansial per provinsi: grafik UMR vs pengeluaran, serta distribusi kategori belanja.")
         st.button(
             "Buka Halaman Report →", 
             use_container_width=True, 
@@ -499,6 +500,13 @@ elif menu == DAFTAR_HALAMAN[2]:
             hasil_sekarang = hitung_skor_kelayakan(gaji_sek, umr_lama, pengeluaran_lama)
             tampilkan_hasil_kelayakan(hasil_sekarang)
 
+            st.markdown("#### 📊 Grafik Perbandingan Finansial Pribadi")
+            df_chart_pribadi = pd.DataFrame({
+                "Kategori": ["Estimasi Gaji", "UMR Daerah", "Total Pengeluaran"],
+                "Nominal (Rp)": [gaji_sek, umr_lama, pengeluaran_lama]
+            })
+            st.bar_chart(data=df_chart_pribadi, x="Kategori", y="Nominal (Rp)", use_container_width=True)
+
             st.markdown("---")
             st.subheader("📂 Rincian Transaksi Pengeluaran")
             q_detail = """
@@ -618,7 +626,7 @@ elif menu == DAFTAR_HALAMAN[2]:
 # ==============================================================================
 elif menu == DAFTAR_HALAMAN[3]:
     st.button("⬅️ Kembali ke Beranda", on_click=ganti_halaman, args=(DAFTAR_HALAMAN[0],), key="back_hal3")
-    st.title("📊 Dashboard Laporan Makroekonomi Daerah")
+    st.title("📊 Dashboard Agregasi Finansial Daerah")
     st.write("Analisis agregasi real-time data pengeluaran masyarakat berbanding standar upah daerah.")
 
     res_total_warga       = run_query("SELECT COUNT(*) as total FROM Penduduk;")
@@ -635,7 +643,7 @@ elif menu == DAFTAR_HALAMAN[3]:
     m3.metric("Total Pengeluaran Nasional",        f"Rp{int(total_pengeluaran):,}")
 
     st.markdown("---")
-    st.subheader("A. Grafik Perbandingan Komparasi Finansial Daerah")
+    st.subheader("A. Komparasi Finansial Antardaerah")
 
     query_prov_chart = """
         SELECT
@@ -670,7 +678,7 @@ elif menu == DAFTAR_HALAMAN[3]:
             )
             df_melted["Metrik Finansial"] = df_melted["Metrik Finansial"].map({
                 "umr": "UMR Provinsi",
-                "rata_pengeluaran_warga": "Rata-rata Pengeluaran Warga"
+                "rata_pengeluaran_warga": "Rata-rata Pengeluaran"
             })
             st.bar_chart(
                 data=df_melted, x="nama_provinsi", y="Nilai (Rupiah)",
@@ -721,9 +729,26 @@ elif menu == DAFTAR_HALAMAN[3]:
     if df_detail is not None and not df_detail.empty:
         total_daerah = df_detail["Total Pengeluaran (Rp)"].sum()
 
+        # 1. Kueri untuk menghitung jumlah penduduk di provinsi terpilih
+        q_jml_orang = """
+            SELECT COUNT(pen.id_penduduk) as total_orang 
+            FROM Penduduk pen 
+            JOIN Provinsi prov ON pen.id_provinsi = prov.id_provinsi 
+            WHERE prov.nama_provinsi = %s;
+        """
+        df_jml = run_query(q_jml_orang, (pilihan_daerah,))
+        
+        # 2. Ambil angkanya, pastikan minimal 1 agar tidak terjadi error pembagian dengan 0
+        jml_orang = int(df_jml['total_orang'].values[0]) if df_jml is not None and not df_jml.empty else 1
+        if jml_orang == 0: 
+            jml_orang = 1 
+
+        # 3. Hitung rata-rata pengeluaran per orang
+        rata_daerah = total_daerah / jml_orang
+
         ic1, ic2, ic3 = st.columns(3)
         ic1.metric("UMR Daerah",               f"Rp{umr_daerah_rpt:,.0f}")
-        ic2.metric("Total Pengeluaran Kumulatif", f"Rp{int(total_daerah):,}")
+        ic2.metric("Rata-rata Pengeluaran per Orang", f"Rp{int(rata_daerah):,}") 
         ic3.metric("Kategori Aktif",            f"{len(df_detail)}")
 
         rep1, rep2 = st.columns([1.2, 0.8])
@@ -736,19 +761,30 @@ elif menu == DAFTAR_HALAMAN[3]:
             st.dataframe(df_fmt, use_container_width=True, hide_index=True)
 
         with rep2:
-            st.write("**Distribusi Proporsi (%):**")
-            df_pct = df_detail.copy()
-            df_pct["Persentase (%)"] = (df_pct["Total Pengeluaran (Rp)"] / total_daerah * 100).round(2)
-            df_pct = df_pct.rename(columns={"Kategori Pengeluaran": "Kategori"})
-            st.bar_chart(
-                data=df_pct[["Kategori", "Persentase (%)"]],
-                x="Kategori", y="Persentase (%)", use_container_width=True
+            st.write("**Distribusi Proporsi Kategori:**")
+            
+            # 1. Siapkan label dan nilainya dari DataFrame
+            labels = df_detail["Kategori Pengeluaran"]
+            sizes  = df_detail["Total Pengeluaran (Rp)"]
+            
+            # 2. Buat kanvas (figure) untuk matplotlib
+            fig, ax = plt.subplots(figsize=(6, 6))
+            
+            # 3. Konfigurasi Pie Chart
+            # autopct='%1.1f%%' berfungsi untuk memunculkan angka persentase dengan 1 angka di belakang koma
+            ax.pie(
+                sizes, 
+                labels=labels, 
+                autopct='%1.1f%%', 
+                startangle=140,
+                colors=plt.cm.Paired.colors, # Opsi pewarnaan agar lebih cantik
+                textprops={'fontsize': 10, 'color': 'black'}
             )
+            ax.axis('equal') # Memastikan diagram berbentuk lingkaran sempurna
+            
+            # 4. Tampilkan di dalam Streamlit
+            st.pyplot(fig)
             st.caption("Proporsi tiap kategori terhadap total pengeluaran daerah.")
-
-        kat_terbesar = df_detail.iloc[0]["Kategori Pengeluaran"]
-        val_terbesar = int(df_detail.iloc[0]["Total Pengeluaran (Rp)"])
-        st.info(f"💡 Pengeluaran terbesar di **{pilihan_daerah}**: **{kat_terbesar}** — Rp{val_terbesar:,}")
     else:
         st.warning(f"⚠️ Belum ada data transaksi untuk daerah **{pilihan_daerah}**.")
         st.caption("Isi data terlebih dahulu melalui halaman Input Penduduk Baru.")
