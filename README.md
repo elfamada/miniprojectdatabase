@@ -12,7 +12,7 @@ Aplikasi ini terhubung secara *real-time* dengan basis data relasional di **TiDB
 2. **Simulasi Kelayakan Finansial:** Menghasilkan "Skor Kelayakan" dan memproyeksikan estimasi ekonomi jika pengguna berencana pindah ke provinsi atau profesi lain menggunakan perhitungan *Faktor Redaman*.
 3. **Laporan Makroekonomi Daerah:** Dasbor analitik yang menyajikan agregasi data berupa rata-rata pengeluaran per kapita, perbandingan beban ekonomi (*Bar Chart*), dan distribusi kategori pengeluaran (*Pie Chart*).
 
-## 🛠️ Teknologi yang Digunakan
+## 🛠️ Tools yang Digunakan
 * **Front-End & Komputasi:** [Streamlit](https://streamlit.io/), Python (Pandas, Matplotlib)
 * **Back-End Database:** TiDB Serverless (MySQL Compatible)
 * **Database Management:** DBeaver, PyMySQL
@@ -31,12 +31,10 @@ Pastikan kamu telah menginstal:
 ### 2. Kloning Repositori
 Buka terminal (Command Prompt/PowerShell/Terminal) dan jalankan perintah berikut:
 ```bash
-git clone [https://github.com/](https://github.com/)[username-github-kamu]/[nama-repositori-kamu].git
-cd [nama-repositori-kamu]
+git clone https://github.com/elfamada/miniprojectdatabase.git
+cd miniprojectdatabase
 
 ```
-
-*(Catatan: Ganti URL di atas dengan tautan repositori GitHub milikmu).*
 
 ### 3. Instalasi Dependensi
 
