@@ -7,9 +7,6 @@ Aplikasi ini terhubung secara *real-time* dengan basis data relasional di **TiDB
 🚀 **Jalankan Aplikasi Secara Live Di Sini:** [Sistem Dashboard Kelayakan Ekonomi](https://miniprojectdatabase-cs2zruxzyucegsdpjjpsgs.streamlit.app/)
 
 ---
-
-## ✨ Fitur Utama
-... (lanjutkan ke bawah seperti draf sebelumnya) ...
 ## ✨ Fitur Utama
 1. **Manajemen Data Penduduk & Transaksi (CRUD):** Formulir interaktif untuk registrasi data identitas, domisili, profesi, dan rincian pengeluaran.
 2. **Simulasi Kelayakan Finansial:** Menghasilkan "Skor Kelayakan" dan memproyeksikan estimasi ekonomi jika pengguna berencana pindah ke provinsi atau profesi lain menggunakan perhitungan *Faktor Redaman*.
