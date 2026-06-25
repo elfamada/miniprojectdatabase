@@ -12,6 +12,30 @@ Aplikasi ini terhubung secara *real-time* dengan basis data relasional di **TiDB
 2. **Simulasi Kelayakan Finansial:** Menghasilkan "Skor Kelayakan" dan memproyeksikan estimasi ekonomi jika pengguna berencana pindah ke provinsi atau profesi lain menggunakan perhitungan *Faktor Redaman*.
 3. **Laporan Makroekonomi Daerah:** Dasbor analitik yang menyajikan agregasi data berupa rata-rata pengeluaran per kapita, perbandingan beban ekonomi (*Bar Chart*), dan distribusi kategori pengeluaran (*Pie Chart*).
 
+## 📊 Metrik & Klasifikasi Indikator Kelayakan
+Sistem ini mengkalkulasi skor kelayakan finansial menggunakan logika multi-aspek dengan bobot skor maksimal **9**. Klasifikasi akhir ditentukan berdasarkan akumulasi parameter berikut:
+
+* **Layak (Skor 8 - 9):** Pendapatan jauh di atas UMR dan mampu menutup seluruh pengeluaran bulanan dengan rasio tabungan yang sehat.
+* **Cukup (Skor 5 - 7):** Pendapatan memenuhi standar standar minimal hidup, namun ruang gerak finansial terbatas untuk alokasi tabungan atau investasi.
+* **Tidak Layak (Skor 1 - 4):** Beban pengeluaran melebihi pendapatan riil atau berada di bawah garis batas UMR wilayah setempat.
+
+Untuk rincian parameter bobot penilaian (Aspek Gaji vs UMR, Gaji vs Pengeluaran, dan UMR vs Pengeluaran), silakan merujuk pada dokumentasi tabel kriteria di bawah ini.
+
+### Kriteria Penilaian Skor
+<img width="552" height="320" alt="image" src="https://github.com/user-attachments/assets/048f2dd1-7b14-4911-aea8-d59d2f8e58da" />
+
+### Dashboard Simulasi Kelayakan Finansial
+<img width="1105" height="532" alt="image" src="https://github.com/user-attachments/assets/5587bdb2-6d50-4fb8-ae9c-f351b797d3c6" />
+
+* Simulasi ketika pindah daerah dan ganti profesi :
+  <img width="1202" height="347" alt="image" src="https://github.com/user-attachments/assets/f2cf766a-19d0-4eb6-9b1a-fa7f09eeefd2" />
+  * Fitur simulasi memproyeksikan perubahan kelayakan jika pengguna pindah provinsi dan/atau berganti sektor profesi.
+    
+* Hasil :
+  <img width="1087" height="550" alt="image" src="https://github.com/user-attachments/assets/8879a96f-41dc-47b8-94b0-ad4f8a0b843e" />
+  <img width="1441" height="227" alt="image" src="https://github.com/user-attachments/assets/66aeca21-e20c-4d0f-a4e0-18bf75ed79d5" />
+  * Sistem menampilkan perbandingan Skor Kelayakan Saat Ini vs Skor Proyeksi. Pengguna dapat melihat apakah pindah daerah/profesi akan meningkatkan atau menurunkan kelayakan.
+
 ## 🛠️ Tools yang Digunakan
 * **Front-End & Komputasi:** [Streamlit](https://streamlit.io/), Python (Pandas, Matplotlib)
 * **Back-End Database:** TiDB Serverless (MySQL Compatible)
